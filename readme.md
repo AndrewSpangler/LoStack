@@ -376,37 +376,17 @@ sudo docker compose exec openldap slapadd -l ldap-backup.ldif
 |-------|-------|
 | **Authentication Type** | `LDAP (via BindDN)` |
 | **Authentication Name** | `OpenLDAP` |
-
-#### LDAP Connection Settings
-| Field | Value |
-|-------|-------|
 | **Host** | `openldap` |
 | **Port** | `389` |
 | **Security Protocol** | `Unecrypted` |
-
-#### LDAP Bind Settings
-| Field | Value |
-|-------|-------|
 | **Bind DN** | `cn=readonly,dc=lostack,dc=internal` |
 | **Bind Password** | `readonly` |
-
-#### User Search Settings
-| Field | Value |
-|-------|-------|
 | **User Search Base** | `ou=people,dc=lostack,dc=internal` |
 | **User Filter** | `(&(objectClass=inetOrgPerson)(uid=%[1]s))` |
-
-#### User Attribute Mapping
-| Field | Value |
-|-------|-------|
 | **Username attribute** | `uid` |
 | **First name attribute** | `givenName` |
 | **Surname attribute** | `sn` |
 | **Email attribute** | `mail` |
-
-#### Admin Settings
-| Field | Value |
-|-------|-------|
 | **Admin Filter** | `(memberOf=cn=admins,ou=groups,dc=lostack,dc=internal)` |
 
 #### Group Verification (Optional)
