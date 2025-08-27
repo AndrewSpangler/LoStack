@@ -363,6 +363,83 @@ tar -xzf lostack-backup.tar.gz
 sudo docker compose exec openldap slapadd -l ldap-backup.ldif
 ```
 
+### Gitea OpenLDAP Integration
+
+#### Access 
+1. Access https://gitea.lostack.internal
+2. Go to **Site Administration** (user icon → Site Administration)
+3. Navigate to **Authentication Sources**
+4. Click **Add Authentication Source**
+
+#### Basic Settings
+| Field | Value |
+|-------|-------|
+| **Authentication Type** | `LDAP (via BindDN)` |
+| **Authentication Name** | `OpenLDAP` |
+
+#### LDAP Connection Settings
+| Field | Value |
+|-------|-------|
+| **Host** | `openldap` |
+| **Port** | `389` |
+| **Security Protocol** | `Unecrypted` |
+
+#### LDAP Bind Settings
+| Field | Value |
+|-------|-------|
+| **Bind DN** | `cn=readonly,dc=lostack,dc=internal` |
+| **Bind Password** | `readonly` |
+
+#### User Search Settings
+| Field | Value |
+|-------|-------|
+| **User Search Base** | `ou=people,dc=lostack,dc=internal` |
+| **User Filter** | `(&(objectClass=inetOrgPerson)(uid=%[1]s))` |
+
+#### User Attribute Mapping
+| Field | Value |
+|-------|-------|
+| **Username attribute** | `uid` |
+| **First name attribute** | `givenName` |
+| **Surname attribute** | `sn` |
+| **Email attribute** | `mail` |
+
+#### Admin Settings
+| Field | Value |
+|-------|-------|
+| **Admin Filter** | `(memberOf=cn=admins,ou=groups,dc=lostack,dc=internal)` |
+
+#### Group Verification (Optional)
+
+If you enable this you will need to create a "gitea_users" group in Ldap User Manager
+
+| Field | Value |
+|-------|-------|
+| **Group Search Base DN** | `ou=groups,dc=lostack,dc=internal` |
+| **Group Attribute Containing List Of Users** | `memberUid` |
+| **User Attribute Listed in Group** | `uid` |
+| **Verify group membership in LDAP** | `(|(cn=gitea_users)(cn=developers)(cn=admins))` |
+
+#### Additional Settings
+| Field | Value |
+|-------|-------|
+| **Enable user synchronization** | `☑ Checked` |
+| **This Authentication Source is Activated** | `☑ Checked` |
+
+#### After Adding LDAP Authentication:
+1. **Disable registration** in Site Administration → Configuration → Service Settings
+2. **Test login** with an LDAP user
+
+#### Troubleshooting Tips:
+- Check Gitea logs: `sudo docker logs gitea`
+- Verify LDAP structure matches the configuration
+- Ensure groups exist in LDAP before using group filters
+
+#### Alternative User Filter Examples:
+- **Simple UID only**: `(uid=%[1]s)`
+- **UID or Email**: `(|(uid=%[1]s)(mail=%[1]s))`
+- **With group membership**: `(&(objectClass=inetOrgPerson)(uid=%[1]s)(memberOf=cn=gitea_users,ou=groups,dc=lostack,dc=internal))`
+
 ## Contributing
 
 Contributions are welcome! Please:
