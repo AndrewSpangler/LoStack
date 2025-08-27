@@ -30,7 +30,17 @@ services:
   filestash:
     displayName: FileStash
     url: http://filestash:8443/
+    names: filstash-onlyoffice
     sessionDuration: 15m
+  freshrss:
+    displayName: FreshRSS
+    url: http://freshrss:80/
+    names: freshrss-db
+  gitea:
+    displayName: Gitea
+    url: http://gitea:3000/
+    names: gitea-db
+    sessionDuration: 1h
   homepage:
     displayName: Homepage
     url: http://homepage:3000/
@@ -51,9 +61,22 @@ services:
     displayName: Ldap User Manager
     url: http://ldap-user-manager:80/
     sessionDuration: 5m
+  linkding:
+    displayName: linkding
+    url: http://linkding:9090/
+    sessionDuration: 5m
+  manyfold:
+    displayName: Manyfold
+    url: http://manyfold:3214/
+    names: manyfold-postgres,manyfold-redis
+    sessionDuration: 5m
   morphos:
     displayName: Morphos
     url: http://morphos:8080/
+    sessionDuration: 5m
+  olivetin:
+    displayName: OliveTin
+    url: http://olivetin:1337/
     sessionDuration: 5m
   omni-tools:
     displayName: Omni-tools
@@ -63,6 +86,10 @@ services:
     displayName: Pairdrop
     url: http://pairdrop:3000/
     sessionDuration: 5m
+  redis-insight:
+    displayName: Redis Insight
+    url: http://redis-insight:5540/
+    sessionDuration: 5m
   reubah:
     displayName: Reubah
     url: http://reubah:8081/
@@ -70,6 +97,7 @@ services:
   sablier-gui:
     displayName: Sablier GUI
     url: http://sablier-gui:80/
+    names: sablier-gui-db
     sessionDuration: 30m
   serve: 
     displayName: Nginx Serve

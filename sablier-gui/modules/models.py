@@ -74,6 +74,7 @@ class SablierService(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    names = db.Column(db.String(400), nullable=False, default="80")
     display_name = db.Column(db.String(200), nullable=True)
     port = db.Column(db.String(10), nullable=False, default="80")
     session_duration = db.Column(db.String(10), nullable=False, default=app.config["SABLIER_DEFAULT_SESSION_DURATION"])
@@ -106,14 +107,15 @@ def export_sablier_config_to_yaml() -> str:
     
     for service in services:
         service_name = service.name
-        
+        dependency_names = service.names.split(",")
+        names = ",".join([s.strip() for s in [service_name, *dependency_names] if len(s)]).strip(",")
         # Create middleware
         middleware_name = f"{service_name}-autostart"
         config["http"]["middlewares"][middleware_name] = {
             "plugin": {
                 "sablier": {
                     "sablierUrl": defaults.sablier_url,
-                    "names": service_name,
+                    "names": names,
                     "sessionDuration": service.session_duration,
                     "dynamic": {
                         "displayName": service.display_name_or_name,

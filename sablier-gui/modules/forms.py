@@ -133,6 +133,22 @@ class SablierServiceForm(FlaskForm):
         },
         description="Unique service name (used in URLs and container names)"
     )
+
+    names = StringField(
+        'Service Dependencies',
+        validators=[
+            Length(min=0, max=400, message="Name must be between 0 and 400 characters"),
+            Regexp(
+                r'^[a-z0-9-,]+$',
+                message="Separate with commas. Names can only contain lowercase letters, numbers, and hyphens."
+            )
+        ],
+        render_kw={
+            "placeholder": "sevice-db,service-redis",
+            "class": "form-control"
+        },
+        description="Dependiencies needed by main container to up/down with it."
+    )
     
     display_name = StringField(
         'Display Name',

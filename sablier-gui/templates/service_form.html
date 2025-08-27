@@ -57,6 +57,38 @@
                         </div>
                     </div>
                     
+                    <!-- Theme -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            {{ form.names.label(class="form-label fw-semibold") }}
+                            {{ form.names(class="form-control" + (" is-invalid" if form.names.errors else "")) }}
+                            {% if form.names.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.names.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Service dependencies, use a comma-separated list of names.
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-6">
+                            {{ form.theme.label(class="form-label fw-semibold") }}
+                            {{ form.theme(class="form-select" + (" is-invalid" if form.theme.errors else "")) }}
+                            {% if form.theme.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.theme.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Visual theme for the loading page
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Port -->
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -101,24 +133,7 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Theme -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            {{ form.theme.label(class="form-label fw-semibold") }}
-                            {{ form.theme(class="form-select" + (" is-invalid" if form.theme.errors else "")) }}
-                            {% if form.theme.errors %}
-                                <div class="invalid-feedback">
-                                    {{ form.theme.errors[0] }}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Visual theme for the loading page
-                            </div>
-                        </div>
-                    </div>
-                    
+                                        
                     <!-- Checkboxes -->
                     <div class="row mb-4">
                         <div class="col-md-6">

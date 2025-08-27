@@ -259,6 +259,19 @@ LoStack replaces Ubuntu's systemd-resolved with CoreDNS to provide:
 - Automatic service discovery
 - Clearer control over Docker Service DNS
 
+## Auth Integration Table
+
+Only containers with multi-user support are listed.
+
+| Service | OpenLDAP | Auto Sign-In |
+| Linkding | -> | Yes (Default) |
+| Ldap User Manager | -> | Yes (Enable in ENV after setup) |
+| Gitea | Yes (See setup guide) | Yes (WIP - not enabled yet) |
+| FreshRSS | -> | Yes (See setup guide) |
+| Filebrowser | -> | Yes (With some effort) (See https://github.com/hurlenko/filebrowser-docker/issues/48) |
+
+
+
 ## Usage
 
 ### Accessing Services
@@ -412,6 +425,13 @@ If you enable this you will need to create a "gitea_users" group in Ldap User Ma
 - Verify LDAP structure matches the configuration
 - Ensure groups exist in LDAP before using group filters
 
+### FreshRSS OpenLDAP/SSO Integration
+
+#### Config 
+1. Access https://freshrss.lostack.internal and log in to FreshRSS with the admin credentials from .env
+2. Go to https://freshrss.lostack.internal/i/?c=auth
+3. Select "HTTP" in the **Authentication method** dropdown
+
 ## Contributing
 
 Contributions are welcome! Please:
@@ -420,6 +440,7 @@ Contributions are welcome! Please:
 2. Create a feature branch
 3. Test changes thoroughly
 4. Submit a pull request with detailed description
+
 
 ## License
 

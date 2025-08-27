@@ -88,6 +88,7 @@ def service_new():
     if form.validate_on_submit():
         service = SablierService(
             name=form.name.data,
+            names=form.names.data,
             display_name=form.display_name.data or None,
             port=form.port.data,
             session_duration=form.session_duration.data,
@@ -161,6 +162,7 @@ def service_import():
                     
                     service = SablierService(
                         name=service_name,
+                        names=service_config.get('names', ''),
                         display_name=service_config.get('displayName', service_name.title()),
                         port=port,
                         session_duration=service_config.get('sessionDuration', defaults.session_duration),

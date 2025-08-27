@@ -7,10 +7,34 @@ background:
   brightness: 100
   opacity: 100
 layout:
+  Bookmarks:
+    style: row
+    columns: 4
+
+  Admin:
+    style: row
+    columns: 4  
+
   Apps:
     style: row
     columns: 4
-  
+
+  Development:
+    style: row
+    columns: 4  
+
+  File Conversion:
+    style: row
+    columns: 4  
+
+  File Management:
+    style: row
+    columns: 4  
+
+  Tools:
+    style: row
+    columns: 4  
+
   Services:
     style: row
     columns: 4
@@ -19,6 +43,7 @@ layout:
     style: row
     columns: 4
 
-  Bookmarks:
+  Databases:
     style: row
     columns: 4
+
