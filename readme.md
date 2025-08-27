@@ -1,6 +1,12 @@
 # LoStack - Local Containerized Service Stack for MacOS
 
+![LoStack Dashboard](docs/images/dashboard.png?raw=true "LoStack Dashboard")
+
 A comprehensive containerized service stack designed to run locally on MacOS using Ubuntu Server in a VM. Outside of the MacOS instructions, there is nothing really MacOS specific. This stack can also be run on WSL/WSL2, or directly on most Docker-capable Linux hosts. LoStack provides a complete development environment with automatic SSL certificates, authentication, service discovery, and on-demand container management. A git service had not yet been decided on.
+
+![Sablier UI](docs/images/dashboard.png?raw=true "Sablier UI")
+
+LoStack comes with a custom app called Sablier UI for configuring container auto-start. It generates necessary files for Traefik to handle the auto-start.
 
 ## Table of Contents
 
