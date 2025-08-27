@@ -1,0 +1,36 @@
+authentication_backend:
+  ldap:
+    password: '{{ env "LDAP_ADMIN_PASSWORD" }}'
+server:
+  endpoints:
+    authz:
+      forward-auth:
+        implementation: ForwardAuth
+identity_validation:
+  reset_password:
+    jwt_secret: '{{ env "CUST_AUTHELIA_JWT_SECRET" }}' 
+
+session:
+  secret: '{{ env "CUST_AUTHELIA_JWT_SECRET" }}' 
+  cookies:
+  - name: authelia_session
+    domain: '{{ env "DOMAINNAME" }}'
+    authelia_url: 'https://{{ env "CUST_AUTHELIA_PREFIX" }}.{{ env "DOMAINNAME" }}/'
+    expiration: 24 hour
+    inactivity: 4 hour
+    default_redirection_url: 'https://{{ env "DOMAINNAME" }}/'
+storage:
+  encryption_key: '{{ env "CUST_AUTHELIA_STORAGE_ENCRYPTION_KEY" }}' 
+  local:
+    path: /config/db.sqlite3
+notifier:
+  filesystem:
+    filename: /config/notification.txt
+
+access_control:
+  default_policy: one_factor
+
+  # Authelia - must bypass for users to log in
+  rules:
+  - domain: authelia.{{ env "DOMAINNAME" }}
+    policy: bypass

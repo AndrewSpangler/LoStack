@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sablier Admin{% endblock %}</title>
+    
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css' ) }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-icons.min.css' ) }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css' ) }}" rel="stylesheet">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar px-0">
+                <div class="p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="text-white mb-0">
+                            <i class="bi bi-gear-fill me-2"></i>
+                            Sablier Admin
+                        </h5>
+                        <button class="btn btn-link text-white p-0 sidebar-toggle d-md-none" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#sidebarNav" 
+                                aria-expanded="false" 
+                                aria-controls="sidebarNav">
+                            <i class="bi bi-list"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="collapse d-md-block sidebar-collapse" id="sidebarNav">
+                        <nav class="nav flex-column">
+                            <a class="nav-link {% if request.endpoint == 'services' %}active{% endif %}" 
+                               href="{{ url_for('services') }}">
+                                <i class="bi bi-list-ul me-2"></i>
+                                Services
+                            </a>
+                            
+                            <a class="nav-link {% if request.endpoint == 'defaults' %}active{% endif %}" 
+                               href="{{ url_for('defaults') }}">
+                                <i class="bi bi-sliders me-2"></i>
+                                Defaults
+                            </a>
+                                                    
+                            <hr class="text-white-50">
+                        </nav>
+                        
+                        <div class="mt-auto text-white-50 small">
+                            <div>
+                                <i class="bi bi-person-circle me-1"></i>
+                                {{ g.user if g.user else 'Unknown' }}
+                            </div>
+                            {% if g.groups %}
+                            <div class="mt-1">
+                                <i class="bi bi-people me-1"></i>
+                                {{ g.groups|join(', ') }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Top Navigation -->
+                <nav class="navbar navbar-light bg-white border-bottom px-3 py-2 my-2">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-link text-dark p-0 me-3 sidebar-toggle d-md-none" 
+                                type="button">
+                        </button>
+                        <span class="navbar-brand mb-0 h1">
+                            {% block page_title %}Sablier Administration{% endblock %}
+                        </span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        {% block nav_actions %}{% endblock %}
+                    </div>
+                </nav>
+                
+                <!-- Content Area -->
+                <div class="p-4">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'error' or category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Page Content -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js' ) }}"></script>
+
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // AJAX service toggle functionality
+        function toggleService(serviceId) {
+            fetch(`/services/toggle/${serviceId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Simple reload for now
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Network error occurred');
+            });
+        }
+        
+        // Bulk operations
+        function toggleAllServices(checked) {
+            const checkboxes = document.querySelectorAll('input[name="service_select"]');
+            checkboxes.forEach(cb => cb.checked = checked);
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            const selected = document.querySelectorAll('input[name="service_select"]:checked');
+            const bulkForm = document.getElementById('bulk-form');
+            const selectedIds = Array.from(selected).map(cb => cb.value).join(',');
+            
+            if (bulkForm) {
+                const hiddenField = bulkForm.querySelector('input[name="selected_services"]');
+                if (hiddenField) {
+                    hiddenField.value = selectedIds;
+                }
+                
+                const submitBtn = bulkForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = selected.length === 0;
+                }
+            }
+        }
+        
+        // Initialize bulk actions on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const serviceCheckboxes = document.querySelectorAll('input[name="service_select"]');
+            serviceCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateBulkActions);
+            });
+            updateBulkActions();
+            
+            // Auto-collapse sidebar on mobile after navigation
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 768) {
+                        const sidebarCollapse = document.getElementById('sidebarNav');
+                        const bsCollapse = new bootstrap.Collapse(sidebarCollapse, {
+                            toggle: false
+                        });
+                        bsCollapse.hide();
+                    }
+                });
+            });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

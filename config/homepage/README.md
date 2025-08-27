@@ -1,0 +1,1 @@
+You can configure your dashboard based on the instructions here: https://gethomepage.dev/configs/settings/

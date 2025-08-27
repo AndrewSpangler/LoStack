@@ -1,0 +1,24 @@
+title: LoStack
+theme: dark
+favicon: /images/favicon.ico
+background:
+  image: /images/background_gradient.jpg
+  saturate: 50
+  brightness: 100
+  opacity: 100
+layout:
+  Apps:
+    style: row
+    columns: 4
+  
+  Services:
+    style: row
+    columns: 4
+    
+  Background Services:
+    style: row
+    columns: 4
+
+  Bookmarks:
+    style: row
+    columns: 4

@@ -1,0 +1,81 @@
+services:
+  arcane:
+    displayName: Arcane
+    url: http://arcane:3000/
+    sessionDuration: 5m
+  bytestash:
+    displayName: ByteStash
+    url: http://bytestash:5000/
+    sessionDuration: 5m
+  code-server:
+    displayName: Code Server
+    url: http://code-server:8443/
+    sessionDuration: 2h
+  cyberchef:
+    displayName: CyberChef
+    url: http://cyberchef:8000/
+    sessionDuration: 5m
+  dozzle:
+    displayName: Dozzle
+    url: http://dozzle:8080/
+    sessionDuration: 5m
+  excalidraw:
+    displayName: Excalidraw
+    url: http://excalidraw:80/
+    sessionDuration: 1m
+  filebrowser:
+    displayName: FileBrowser
+    url: http://filebrowser:80/
+    sessionDuration: 15m
+  filestash:
+    displayName: FileStash
+    url: http://filestash:8443/
+    sessionDuration: 15m
+  homepage:
+    displayName: Homepage
+    url: http://homepage:3000/
+    sessionDuration: 30m
+  hrconvert:
+    displayName: HRConvert
+    url: http://hrconvert:80/
+    sessionDuration: 5m
+  it-tools:
+    displayName: IT-Tools
+    url: http://it-tools:80/
+    sessionDuration: 5m
+  jupyter:
+    displayName: Jupyter
+    url: http://jupyter:8888/
+    sessionDuration: 1h
+  ldap-user-manager:
+    displayName: Ldap User Manager
+    url: http://ldap-user-manager:80/
+    sessionDuration: 5m
+  morphos:
+    displayName: Morphos
+    url: http://morphos:8080/
+    sessionDuration: 5m
+  omni-tools:
+    displayName: Omni-tools
+    url: http://omni-tools:80/
+    sessionDuration: 5m
+  pairdrop:
+    displayName: Pairdrop
+    url: http://pairdrop:3000/
+    sessionDuration: 5m
+  reubah:
+    displayName: Reubah
+    url: http://reubah:8081/
+    sessionDuration: 15m
+  sablier-gui:
+    displayName: Sablier GUI
+    url: http://sablier-gui:80/
+    sessionDuration: 30m
+  serve: 
+    displayName: Nginx Serve
+    url: http://serve:80/
+    sessionDuration: 15m
+  tasks:
+    displayName: Tasks
+    url: http://tasks:8080/
+    sessionDuration: 5m

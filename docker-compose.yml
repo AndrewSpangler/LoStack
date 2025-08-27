@@ -1,0 +1,831 @@
+networks:
+  traefik_network:
+    driver: bridge
+    name: traefik_network
+    external: false
+
+services:
+  arcane:
+    image: ghcr.io/ofkm/arcane:latest
+    container_name: arcane
+    hostname: arcane
+    volumes:
+      - ${DOCKER_SOCKET}:/var/run/docker.sock
+      - ${APPDATA_DIR}/arcane:/app/data
+    environment:
+      - APP_ENV=production
+      - PUID=1000
+      - PGID=1000
+      - PUBLIC_SESSION_SECRET=${ARCANE_SESSION_SECRET}
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.arcane.rule=Host(`arcane.${DOMAINNAME}`)"
+      - "traefik.http.services.arcane.loadbalancer.server.port=3000"
+      - "homepage.name=Arcane"
+      - "homepage.group=Apps"
+      - "homepage.icon=arcane"
+      - "homepage.description=Docker Manager"
+      - "homepage.href=https://arcane.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=arcane"
+
+  authelia:
+    image: authelia/authelia
+    hostname: authelia
+    container_name: authelia
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    ports:
+      - ${AUTHELIA_PORT}:${AUTHELIA_PORT}
+    volumes:
+      - ${CONFIG_DIR}/authelia:/config
+    depends_on:
+      - traefik
+      - openldap
+    environment:
+      TZ: $TZ
+      X_AUTHELIA_CONFIG_FILTERS: template
+      AUTHELIA_SERVER_BUFFERS_READ: 16384
+      AUTHELIA_SERVER_BUFFERS_WRITE: 16384
+      AUTHELIA_LOG_LEVEL: info
+      AUTHELIA_LOG_FORMAT: text
+      AUTHELIA_LOG_FILE_PATH: /config/authelia.log
+      AUTHELIA_LOG_KEEP_STDOUT: false
+      AUTHELIA_REGULATION_MAX_RETRIES: 10
+      AUTHELIA_REGULATION_FIND_TIME: 2 minutes
+      AUTHELIA_REGULATION_BAN_TIME: 3 minutes
+      AUTHELIA_SERVER_ADDRESS: :${AUTHELIA_PORT}
+      AUTHELIA_THEME: dark
+      AUTHELIA_TOTP_ISSUER: authelia.com
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_ATTRIBUTES_GROUP_NAME: cn
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_IMPLEMENTATION: custom
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_ADDRESS: ldaps://openldap
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_START_TLS: false
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_TLS_SKIP_VERIFY: true
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_TLS_MINIMUM_VERSION: TLS1.2
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_BASE_DN: ${LDAP_BASE_DN}
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_ADDITIONAL_USERS_DN: ou=people
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_USERS_FILTER: (&({username_attribute}={input})(objectClass=person))
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_ADDITIONAL_GROUPS_DN: ou=groups
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_GROUPS_FILTER: (&(uniquemember={dn})(objectclass=groupOfUniqueNames))
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_USER: cn=${LDAP_ADMIN_USER},${LDAP_BASE_DN}
+      DOMAINNAME: ${DOMAINNAME}
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD}
+      CUST_AUTHELIA_PREFIX: ${AUTHELIA_PREFIX}
+      CUST_AUTHELIA_JWT_SECRET: ${AUTHELIA_JWT_SECRET}
+      CUST_AUTHELIA_STORAGE_ENCRYPTION_KEY: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+      CUST_AUTHELIA_SESSION_SECRET: ${AUTHELIA_SESSION_SECRET}
+    labels:
+      # Add traefik routing
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`${AUTHELIA_PREFIX}.${DOMAINNAME}`) || Host(`auth.${DOMAINNAME}`)'
+      - 'traefik.http.routers.authelia.entrypoints=https' 
+      - 'traefik.http.routers.authelia.tls=true'
+      - 'traefik.http.routers.authelia.tls.options=default'
+      # Add forwardauth and proxy header to authelia middleware
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:${AUTHELIA_PORT}/api/authz/forward-auth'
+      - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
+      - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+      # # Add error handling middleware  
+      # - 'traefik.http.middlewares.errorhandler.errors.status=404'
+      # - 'traefik.http.middlewares.errorhandler.errors.service=errorhandler-backend'
+      # - 'traefik.http.middlewares.errorhandler.errors.query=/'
+      # Configure homepage automatic discovery
+      - "homepage.name=Authelia"
+      - "homepage.group=Services"
+      - "homepage.icon=authelia"
+      - "homepage.description=Authentication service"
+      - "homepage.href=https://authelia.${DOMAINNAME}/"
+
+  bytestash:
+    image: "ghcr.io/jordan-dalby/bytestash:latest"
+    hostname: bytestash
+    container_name: bytestash
+    restart: always
+    volumes:
+      - ${APPDATA_DIR}/bytestash:/data/snippets
+    environment:
+      BASE_PATH: ${BYTESTASH_BASE_PATH}
+      JWT_SECRET: ${BYTESTASH_JWT_SECRET}
+      TOKEN_EXPIRY: 24h
+      ALLOW_NEW_ACCOUNTS: ${BYTESTASH_ALLOW_NEW_ACCOUNTS}
+      DEBUG: ${BYTESTASH_DEBUG}
+      DISABLE_ACCOUNTS: ${BYTESTASH_DISABLE_ACCOUNTS}
+      DISABLE_INTERNAL_ACCOUNTS: ${BYTESTASH_DISABLE_INTERNAL_ACCOUNTS}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bytestash.entrypoints=https"
+      - "traefik.http.routers.bytestash.rule=Host(`bytestash.${DOMAINNAME}`)"
+      - "traefik.http.services.bytestash.loadbalancer.server.port=5000"
+      - "homepage.name=ByteStash"
+      - "homepage.group=Apps"
+      - "homepage.icon=bytestash"
+      - "homepage.description=Code Snippets"
+      - "homepage.href=https://bytestash.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=bytestash"
+
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    hostname: code-server
+    restart: always
+    networks:
+      - traefik_network
+    ports: # ENABLE FOR SETUP AND EMERGENCY ACCESS
+      - ${CODE_SERVER_PORT}:8443
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: ${TZ}
+      DEFAULT_WORKSPACE: ${CODE_SERVER_WORKSPACE}
+      PASSWORD: ${ADMIN_PASSWORD}
+      SUDO_PASSWORD: ${SUDO_PASSWORD}
+      PROXY_DOMAIN: code-server.${DOMAINNAME}
+    volumes:
+      - ${APPDATA_DIR}/code-server:/config
+      - ./:/workspace:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.code-server.entrypoints=https"
+      - "traefik.http.routers.code-server.rule=Host(`code-server.${DOMAINNAME}`)"
+      - "traefik.http.services.code-server.loadbalancer.server.port=8443"
+      - "homepage.name=Code Server"
+      - "homepage.group=Apps"
+      - "homepage.icon=vscode"
+      - "homepage.description=Local File Editor"
+      - "homepage.href=https://code-server.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=code-server"
+
+  coredns:
+    image: coredns/coredns
+    container_name: coredns
+    hostname: coredns
+    network_mode: host # MUST BE HOST FOR HOST OS TO USE AS RESOLVER
+    restart: unless-stopped
+    command: -conf /data/Corefile
+    ports:
+      - ${CORE_DNS_PORT}:53/tcp
+      - ${CORE_DNS_PORT}:53/udp
+    environment:
+      HOST_IP: ${HOST_IP}
+      HOSTNAME: ${HOSTNAME}
+      DOMEXT: ${DOMEXT}
+      DOMAINNAME: ${DOMAINNAME}
+      DNS_IP: ${DNS_IP}
+      DNS_EXPIRATION_TIME: ${DNS_EXPIRATION_TIME}
+    volumes:
+      - ${CONFIG_DIR}/coredns/config:/config/
+      - ${CONFIG_DIR}/coredns/Corefile:/data/Corefile
+    labels:
+      - "homepage.name=CoreDNS"
+      - "homepage.group=Background Services"
+      - "homepage.icon=coredns"
+      - "homepage.description=Local Name Service"
+
+  cyberchef:
+    image: mpepping/cyberchef:latest
+    container_name: cyberchef
+    hostname: cyberchef
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cyberchef.entrypoints=https"
+      - "traefik.http.routers.cyberchef.rule=Host(`cyberchef.${DOMAINNAME}`)"
+      - "traefik.http.services.cyberchef.loadbalancer.server.port=8000"
+      - "homepage.name=CyberChef"
+      - "homepage.group=Apps"
+      - "homepage.icon=cyberchef"
+      - "homepage.description=Cybersecurity Tools"
+      - "homepage.href=https://cyberchef.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=cyberchef"
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    hostname: dozzle
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    volumes:
+      - "${DOCKER_SOCKET}:/var/run/docker.sock"
+    environment:
+      TZ: ${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAINNAME}`)"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+      - "homepage.name=Dozzle"
+      - "homepage.group=Apps"
+      - "homepage.icon=dozzle"
+      - "homepage.description=Container Logs"
+      - "homepage.href=https://dozzle.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=dozzle"
+
+  excalidraw:
+    image: excalidraw/excalidraw:latest
+    container_name: excalidraw
+    hostname: excalidraw
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    stdin_open: true
+    healthcheck:
+      disable: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.excalidraw.rule=Host(`excalidraw.${DOMAINNAME}`)"
+      - "traefik.http.services.excalidraw.loadbalancer.server.port=80"
+      - "traefik.http.services.excalidraw.loadbalancer.server.scheme=http"
+      - "homepage.name=Excalidraw"
+      - "homepage.group=Apps"
+      - "homepage.icon=excalidraw"
+      - "homepage.description=Diagram Tool"
+      - "homepage.href=https://excalidraw.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=excalidraw"
+
+  filebrowser:
+    image: filebrowser/filebrowser
+    container_name: filebrowser
+    hostname: filebrowser
+    restart: unless-stopped
+    user: "1000:1000"
+    networks:
+      - traefik_network
+    volumes:
+      - ${APPDATA_DIR}/filebrowser/:/database/:rw
+      - ./:/data:rw
+    environment:
+      TZ: ${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filebrowser.rule=Host(`filebrowser.${DOMAINNAME}`)"
+      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
+      - "homepage.name=Filebrowser"
+      - "homepage.group=Apps"
+      - "homepage.icon=filebrowser"
+      - "homepage.description=File Management"
+      - "homepage.href=https://filebrowser.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=filebrowser"
+  
+  filestash:
+    image: machines/filestash:latest
+    container_name: filestash
+    hostname: filestash
+    restart: always
+    depends_on:
+      - filestash-onlyoffice
+    environment:
+      - APPLICATION_URL=filestash.${DOMAINNAME}
+      - CANARY=true
+      - ONLYOFFICE_URL=http://filestash-onlyoffice
+    volumes:
+      - ${APPDATA_DIR}/filestash:/app/data/state/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filestash.rule=Host(`filestash.${DOMAINNAME}`)"
+      - "traefik.http.services.filestash.loadbalancer.server.port=8334"
+      - "homepage.name=FileStash"
+      - "homepage.group=Apps"
+      - "homepage.icon=filestash"
+      - "homepage.description=File Transfers"
+      - "homepage.href=https://filestash.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=filestash"
+
+  filestash-onlyoffice:
+    image: onlyoffice/documentserver
+    container_name: filestash-onlyoffice
+    hostname: filestash-onlyoffice
+    restart: always
+    security_opt:
+      - seccomp:unconfined
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filestash-onlyoffice.rule=Host(`filestash-onlyoffice.${DOMAINNAME}`)"
+      - "homepage.name=FileStash OnlyOffice"
+      - "homepage.group=Background Services"
+      - "homepage.icon=onlyoffice"
+      - "homepage.description=File Transfers"
+      - "homepage.href=https://filestash-onlyoffice.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=filestash"
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    hostname: homepage
+    restart: unless-stopped
+    user: root
+    networks:
+      - traefik_network  
+    volumes:
+      - ${CONFIG_DIR}/homepage:/app/config
+      - ${LOGS_DIR}/homepage:/app/config/logs
+      - ${CONFIG_DIR}/homepage/images:/app/public/images
+      - ${DOCKER_SOCKET}:/var/run/docker.sock
+    environment:
+      TZ: ${TZ}
+      HOMEPAGE_ALLOWED_HOSTS: ${DOMAINNAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`${DOMAINNAME}`)"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+      - "homepage.name=Homepage"
+      - "homepage.group=Services"
+      - "homepage.icon=homepage"
+      - "homepage.description=Environment Dashboard"
+      - "homepage.href=https://${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=homepage"
+
+  hrconvert:
+    image: dwaaan/hrconvert2-docker:latest
+    container_name: hrconvert
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hrconvert.rule=Host(`hrconvert.${DOMAINNAME}`)"
+      - "traefik.http.services.hrconvert.loadbalancer.server.port=80"
+      - "homepage.name=HRConvert"
+      - "homepage.group=Apps"
+      - "homepage.icon=mdi-autorenew"
+      - "homepage.description=File Coversion"
+      - "homepage.href=https://hrconvert.${DOMAINNAME}/HRProprietary/HRConvert2/convertCore.php"
+      - "sablier.enable=true"
+      - "sablier.group=hrconvert"
+      
+  it-tools:
+    image: corentinth/it-tools
+    container_name: it-tools
+    hostname: it-tools
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    # ports: # Uncomment this if you want to use the container during setup
+    #   - 8380:80
+    environment:
+      PUID: 1024
+      PGID: 101
+      TZ: ${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.it-tools.entrypoints=https"
+      - "traefik.http.routers.it-tools.rule=Host(`it-tools.${DOMAINNAME}`)"
+      - "traefik.http.services.it-tools.loadbalancer.server.port=80"
+      - "homepage.name=IT-Tools"
+      - "homepage.group=Apps"
+      - "homepage.icon=it-tools"
+      - "homepage.description=Dev Tools"
+      - "homepage.href=https://it-tools.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=it-tools"
+
+  jupyter:
+    image: jupyter/base-notebook:latest
+    container_name: jupyter
+    hostname: jupyter
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    volumes:
+      - ${APPDATA_DIR}/jupyter:/home/docker_worker/work
+    command: "start-notebook.sh"
+    user: root
+    environment:
+      NB_USER: ADMIN
+      NB_UID: 1001
+      NB_GID: 100
+      CHOWN_HOME: 'yes'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jupyter.entrypoints=https"
+      - "traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAINNAME}`)"
+      - "traefik.http.services.jupyter.loadbalancer.server.port=8888"
+      - "homepage.name=Jupyter"
+      - "homepage.group=Apps"
+      - "homepage.icon=jupyter"
+      - "homepage.description=Python Data Science"
+      - "homepage.href=https://jupyter.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=jupyter"
+
+  ldap-user-manager:
+    image: wheelybird/ldap-user-manager:v1.9
+    container_name: ldap-user-manager
+    hostname: ldap-user-manager
+    restart: unless-stopped
+    ports:
+      - ${LDAP_USER_MANAGER_PORT}:80
+    networks:
+      - traefik_network
+    depends_on:
+      - openldap
+    environment:
+      TZ: $TZ
+      SERVER_HOSTNAME: ldap-user-manager.${DOMAINNAME}
+      ORGANISATION_NAME: ${LDAP_ORGANISATION}
+      LDAP_URI: "ldap://openldap:${OPENLDAP_PORT}"
+      LDAP_BASE_DN: "${LDAP_BASE_DN}"
+      LDAP_ADMINS_GROUP: "admins"
+      LDAP_ADMIN_BIND_DN: "cn=${LDAP_ADMIN_USER},${LDAP_BASE_DN}"
+      LDAP_ADMIN_BIND_PWD: ${LDAP_ADMIN_PASSWORD} 
+      LDAP_DEBUG: "true"
+      LDAP_IGNORE_CERT_ERRORS: "true"
+      LDAP_REQUIRE_STARTTLS: "false"
+      LDAP_DOMAIN: "${DOMAINNAME}"
+      EMAIL_DOMAIN: "@${DOMAINNAME}"
+      NO_HTTPS: "true"
+      ACCEPT_WEAK_PASSWORDS : ${LDAP_ACCEPT_WEAK_PASSWORDS}
+      EMAIL_FROM_ADDRESS: "${LDAP_ADMIN_USER}@${DOMAINNAME}"
+      REMOTE_HTTP_HEADERS_LOGIN: "${LUM_REMOTE_HTTP_HEADERS_LOGIN}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ldap-user-manager.rule=Host(`ldap-user-manager.${DOMAINNAME}`)"
+      - "traefik.http.services.ldap-user-manager.loadbalancer.server.port=80"
+      - "traefik.http.services.ldap-user-manager.loadbalancer.server.scheme=http"
+      - "homepage.name=Ldap User Manager"
+      - "homepage.group=Services"
+      - "homepage.icon=/images/account.png"
+      - "homepage.description=Users and Groups"
+      - "homepage.href=https://ldap-user-manager.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=ldap-user-manager"
+
+  mkcert:
+    image: vishnunair/docker-mkcert
+    container_name: mkcert
+    hostname: mkcert
+    restart: unless-stopped
+    volumes:
+        - ${CERTS_DIR}:/root/.local/share/mkcert
+    environment: 
+      domain: ${DOMAINNAME},*.${DOMAINNAME}
+    labels:
+      - "homepage.name=MKCert"
+      - "homepage.group=Background Services"
+      - "homepage.icon=/images/lock.png"
+      - "homepage.description=Localhost cert management"
+
+  morphos:
+    image: ghcr.io/danvergara/morphos-server:latest
+    container_name: morphos
+    hostname: morphos
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    volumes:
+      - ${CONFIG_DIR}/morphos:/tmp:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.morphos.rule=Host(`morphos.${DOMAINNAME}`)"
+      - "traefik.http.services.morphos.loadbalancer.server.port=8080"
+      - "homepage.name=Morphos"
+      - "homepage.group=Apps"
+      - "homepage.icon=morphos"
+      - "homepage.description=File Conversion"
+      - "homepage.href=https://morphos.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=morphos"
+
+
+  omni-tools:
+    image: iib0011/omni-tools
+    container_name: omni-tools
+    hostname: omni-tools
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    ports:
+      - "8080:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.omni-tools.rule=Host(`omni-tools.${DOMAINNAME}`)"
+      - "traefik.http.services.omni-tools.loadbalancer.server.port=80"
+      - "homepage.name=Omni Tools"
+      - "homepage.group=Apps"
+      - "homepage.icon=omni-tools"
+      - "homepage.description=Tools Collection"
+      - "homepage.href=https://omni-tools.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=omni-tools"
+
+  openldap:
+    image: osixia/openldap:latest
+    container_name: openldap
+    hostname: openldap
+    restart: unless-stopped
+    command: --copy-service
+    networks:
+      - traefik_network
+    volumes: 
+      - ${CONFIG_DIR}/openldap/ldap/db:/var/lib/ldap:rw
+      - ${CONFIG_DIR}/openldap/ldap/conf:/etc/ldap/slapd.d:rw
+    environment:
+      TZ: ${TZ}
+      LDAP_ORGANISATION: ${LDAP_ORGANISATION}
+      LDAP_DOMAIN: ${DOMAINNAME}
+      LDAP_BASE_DN: ${LDAP_BASE_DN}
+      LDAP_ADMIN_USERNAME: ${LDAP_ADMIN_USER}
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD}
+      LDAP_CONFIG_PASSWORD: ${LDAP_CONFIG_PASSWORD}
+      LDAP_TLS_VERIFY_CLIENT: ${LDAP_TLS_VERIFY_CLIENT}
+      LDAP_READONLY_USER: ${LDAP_READONLY_USER}
+      LDAP_READONLY_USER_USERNAME: ${LDAP_READONLY_USER_USERNAME}
+      LDAP_READONLY_USER_PASSWORD: ${LDAP_READONLY_USER_PASSWORD}
+      LDAP_RFC2307BIS_SCHEMA: ${LDAP_RFC2307BIS_SCHEMA}
+      LDAP_BACKEND: ${LDAP_BACKEND}
+      LDAP_REPLICATION: ${LDAP_REPLICATION}
+      KEEP_EXISTING_CONFIG: "false"
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+      LDAP_PORT_NUMBER: ${OPENLDAP_PORT}
+      LDAP_LDAPS_PORT_NUMBER: ${OPENLDAP_LDAPS_PORT}
+    labels:
+      - "homepage.name=OpenLDAP"
+      - "homepage.group=Background Services"
+      - "homepage.icon=openldap"
+      - "homepage.description=Users and Groups Service"
+
+  pairdrop:
+    image: lscr.io/linuxserver/pairdrop:latest
+    container_name: pairdrop
+    hostname: pairdrop
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    environment:
+      PUID: 1000
+      PGID: 1000
+      WS_FALLBACK: ${PAIRDROP_WS_FALLBACK}
+      RATE_LIMIT: ${PAIRDROP_RATE_LIMIT}
+      RTC_CONFIG: ${PAIRDROP_RTC_CONFIG}
+      DEBUG_MODE: ${PAIRDROP_DEBUG_MODE}
+      TZ: ${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pairdrop.rule=Host(`pairdrop.${DOMAINNAME}`)"
+      - "traefik.http.services.pairdrop.loadbalancer.server.port=3000"
+      - "homepage.name=Pairdrop"
+      - "homepage.group=Apps"
+      - "homepage.icon=pairdrop"
+      - "homepage.description=Filesharing Tool"
+      - "homepage.href=https://pairdrop.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=pairdrop"
+
+  reubah:
+    image: ghcr.io/dendianugerah/reubah:latest
+    container_name: reubah
+    hostname: reubah
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.reubah.rule=Host(`reubah.${DOMAINNAME}`)"
+      - "traefik.http.services.reubah.loadbalancer.server.port=8081"
+      - "homepage.name=Reubah"
+      - "homepage.group=Apps"
+      - "homepage.icon=mdi-autorenew"
+      - "homepage.description=Bulk File Converter"
+      - "homepage.href=https://reubah.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=reubah"
+
+  sablier:
+    image: sablierapp/sablier:latest
+    container_name: sablier
+    hostname: sablier
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    command:
+      - start
+      - --provider.name=docker
+      - --logging.level=debug
+    volumes:
+      - ${DOCKER_SOCKET}:/var/run/docker.sock
+
+  sablier-gui:
+    container_name: sablier-gui
+    hostname: sablier-gui
+    networks:
+      traefik_network: {}
+    build:
+      context: sablier-gui
+      target: builder
+    stop_signal: SIGINT
+    depends_on:
+      - sablier-gui-db
+    volumes:
+      - ${DOCKER_SOCKET}:/var/run/docker.sock
+      - ${CONFIG_DIR}/sablier/sablier-dynamic.yml:/dynamic.yml:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ}
+      - DB_HOST=sablier-gui-db
+      - DB_PORT=3306
+      - DB_USER=sablier
+      - DB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_NAME=sablier-gui-db
+      - DOMAIN_NAME=${DOMAINNAME}
+      - SABLIER_URL=http://sablier:10000
+      - SABLIER_DEFAULT_SESSION_DURATION=${SABLIER_DEFAULT_SESSION_DURATION}
+      - SABLIER_DEFAULT_THEME=${SABLIER_DEFAULT_THEME}
+      - TRUSTED_PROXY_IPS=${SABLIER_TRUSTED_PROXY_IPS}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sablier-gui.rule=Host(`sablier-gui.${DOMAINNAME}`)"
+      - "traefik.http.services.sablier-gui.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik_network"
+      - "homepage.name=Sablier GUI"
+      - "homepage.group=Apps"
+      - "homepage.icon=mdi-rocket-launch"
+      - "homepage.description=Container Auto-Start"
+      - "homepage.href=https://sablier-gui.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=sablier-gui"
+
+  sablier-gui-db:
+    image: mariadb:10.11
+    container_name: sablier-gui-db
+    hostname: sablier-gui-sb
+    networks:
+      traefik_network: {}
+    environment:
+      - MYSQL_ROOT_PASSWORD=${SABLIER_GUI_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=sablier-gui-db
+      - MYSQL_USER=sablier
+      - MYSQL_PASSWORD=${DATABASE_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA_DIR}/sablier-gui-db/:/var/lib/mysql
+    labels:
+      - "homepage.name=Sablier GUI DB"
+      - "homepage.group=Background Services"
+      - "homepage.icon=mariadb"
+      - "homepage.description=Container Auto-Start"
+      - "sablier.enable=true"
+      - "sablier.group=sablier-gui"
+    
+  serve:
+    image: nginx:latest
+    container_name: serve
+    hostname: serve
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    volumes:
+      - ${APPDATA_DIR}/serve:/usr/share/nginx/html/
+    environment:
+      AUTO_INDEX: on
+    entrypoint: >
+      /bin/sh -c "
+      echo 'events {}' > /etc/nginx/nginx.conf && \
+      echo 'http {
+        server {
+          listen 80;
+
+          location / {
+            root /usr/share/nginx/html;
+            autoindex on;
+          }
+
+          location /sprays/ {
+            root /usr/share/nginx/html;
+            autoindex on;
+          }
+        }
+      }' >> /etc/nginx/nginx.conf && \
+      nginx -g 'daemon off;'
+      "
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.serve.rule=Host(`serve.${DOMAINNAME}`)"
+      - "traefik.http.services.serve.loadbalancer.server.port=80"
+      - "traefik.http.services.serve.loadbalancer.server.scheme=http"
+      - "homepage.name=File Server"
+      - "homepage.group=Apps"
+      - "homepage.icon=nginx"
+      - "homepage.description=Simple File Service"
+      - "homepage.href=https://serve.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=serve"
+
+  tasks:
+    image: baldissaramatheus/tasks.md
+    container_name: tasks
+    hostname: tasks
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    volumes:
+      - $APPDATA_DIR/tasksmd/tasks:/tasks
+      - $APPDATA_DIR/tasksmd/config:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tasks.rule=Host(`tasks.${DOMAINNAME}`)"
+      - "traefik.http.services.tasks.loadbalancer.server.port=8080"
+      - "homepage.name=Tasks"
+      - "homepage.group=Apps"
+      - "homepage.icon=mdi-format-list-checks"
+      - "homepage.description=Todo Lists Manager"
+      - "homepage.href=https://tasks.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=tasks"
+    
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    hostname: traefik
+    restart: unless-stopped
+    networks:
+      traefik_network:
+        aliases:
+          - 'traefik'
+          - 'traefik.${DOMAINNAME}'
+          - '${AUTHELIA_PREFIX}.${DOMAINNAME}'
+    dns:
+      - ${DNS_IP}
+      - ${HOST_IP}
+    ports:
+      - ${TRAEFIK_PORT_HTTP}:80
+      - ${TRAEFIK_PORT_HTTPS}:443
+    volumes:
+      - ${DOCKER_SOCKET}:/var/run/docker.sock:ro
+      - ${CERTS_DIR}:/certs:ro
+      - ${CONFIG_DIR}/traefik/dynamic.yml:/dynamic/dynamic.yml
+      - ${CONFIG_DIR}/sablier/sablier-dynamic.yml:/dynamic/sablier-dynamic.yml
+      - ${LOGS_DIR}/traefik:/logs/
+      - ./plugins-local:/plugins-local
+    environment:
+      TZ: ${TZ}
+      DOMAINNAME: ${DOMAINNAME}
+    labels:
+      - "traefik.enable=true"
+      # TLS options
+      - "traefik.tls.options.modern.minVersion=VersionTLS13"
+      - "traefik.tls.options.intermediate.minVersion=VersionTLS12"
+      - "traefik.tls.options.intermediate.cipherSuites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+      # Add auth middleware
+      - "traefik.http.routers.api.middlewares=authelia@docker"
+      # Define redirect-to-https middleware
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+      # Associate traefik with hostname
+      - "traefik.http.routers.traefik.tls.domains[1].main=${DOMAINNAME}"
+      - "traefik.http.routers.traefik.tls.domains[1].sans=*.${DOMAINNAME}"
+      # Add traefik dashboard routing
+      - "traefik.http.routers.api.rule=Host(`traefik.${DOMAINNAME}`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.options=default"
+      # Middleware - Portainer Theme
+      - "traefik.http.middlewares.portainertheme.plugin.themepark.app=portainer"
+      - "traefik.http.middlewares.portainertheme.plugin.themepark.theme=nord"
+      # Middleware - Filebrowser Theme
+      - "traefik.http.middlewares.filebrowsertheme.plugin.themepark.app=filebrowser"
+      - "traefik.http.middlewares.filebrowsertheme.plugin.themepark.theme=nord"
+      # Middleware - Dozzle Theme
+      - "traefik.http.middlewares.dozzletheme.plugin.themepark.app=dozzle"
+      - "traefik.http.middlewares.dozzletheme.plugin.themepark.theme=nord"
+      # Middleware - Dozzle CSP Headers
+      - "traefik.http.middlewares.dozzle-csp.headers.customResponseHeaders.X-WebKit-CSP="
+      - "traefik.http.middlewares.dozzle-csp.headers.customResponseHeaders.Content-Security-Policy="
+      # Configure homepage automatic discovery
+      - "homepage.name=Traefik Dashboard"
+      - "homepage.group=Services"
+      - "homepage.icon=traefik"
+      - "homepage.description=Traefik proxy dashboard"
+      - "homepage.href=https://traefik.${DOMAINNAME}/"
+    command:
+      - "--global.sendAnonymousUsage=false"
+      - "--global.checkNewVersion=false"
+      - "--log.level=DEBUG"
+      - "--log.filepath=logs/traefik.log"
+      - "--api.dashboard=true"
+      - "--entrypoints.https.address=:443"
+      - "--entrypoints.https.http.middlewares=authelia@docker"
+      - "--entrypoints.https.http.tls=true"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.http.http.middlewares=redirect-to-https"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.file.directory=/dynamic/"
+      - "--providers.file.watch=true"
+      - "--experimental.localPlugins.sablier.modulename=github.com/sablierapp/sablier"

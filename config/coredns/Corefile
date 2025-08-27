@@ -1,0 +1,28 @@
+.:53 {
+    log
+    errors
+
+    template IN A {
+        match "^{$HOSTNAME}\.{$DOMEXT}\.$"
+        answer "{{ .Name }} 30 IN A {$HOST_IP}"
+        fallthrough
+    }
+
+    template IN A {
+        match "^(.*)\.{$HOSTNAME}\.{$DOMEXT}\.$"
+        answer "{{ .Name }} 30 IN A {$HOST_IP}"
+        fallthrough
+    }
+
+    # Forward all other queries to upstream servers
+    forward . {$DNS_IP} {
+        policy sequential
+        max_fails 1
+        expire {$DNS_EXPIRATION_TIME}
+    }
+
+    cache 30
+    loop
+    reload
+    bind 0.0.0.0
+}
