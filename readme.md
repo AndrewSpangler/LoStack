@@ -2,7 +2,7 @@
 
 ![LoStack Dashboard](docs/images/dashboard.png?raw=true "LoStack Dashboard")
 
-A comprehensive containerized service stack designed to run locally on MacOS using Ubuntu Server in a VM. Outside of the MacOS instructions, there is nothing really MacOS specific. This stack can also be run on WSL/WSL2, or directly on most Docker-capable Linux hosts. LoStack provides a complete development environment with automatic SSL certificates, authentication, service discovery, and on-demand container management. A git service had not yet been decided on.
+A comprehensive containerized service stack designed to run locally on MacOS using Ubuntu Server in a VM. Outside of the MacOS instructions, there is nothing really MacOS specific. This stack can also be run on WSL/WSL2, or directly on most Docker-capable Linux hosts. LoStack provides a complete development environment with automatic SSL certificates, authentication, service discovery, and on-demand container management.
 
 ![Sablier UI](docs/images/sablier-admin.png?raw=true "Sablier UI")
 
@@ -36,7 +36,7 @@ After a decade away from MacOS, Docker Desktop proved inadequate for running com
 - **Reverse Proxy**: Traefik with automatic HTTPS and service routing
 - **On-Demand Services**: Sablier manages container lifecycle, starting services when needed
 - **Web-Based Management**: Homepage dashboard for easy service access
-- **Development Tools**: Integrated Code-Server, file browsers, and utilities
+- **Development Tools**: Integrated Code-Server, file browsers, git service, and utilities
 - **Resource Efficient**: Services sleep when not in use to conserve system resources
 
 ## Architecture
@@ -209,18 +209,19 @@ LoStack includes a comprehensive suite of services:
 | Service | Purpose | Access URL |
 |---------|---------|------------|
 | **Code-Server** | Web-based VS Code | https://code-server.lostack.internal/ |
-| **Jupyter** | Python notebooks | https://jupyter.lostack.internal/ |
-| **Filebrowser** | File management | https://filebrowser.lostack.internal/ |
 | **Dozzle** | Container logs | https://dozzle.lostack.internal/ |
+| **Filebrowser** | File management | https://filebrowser.lostack.internal/ |
+| **Gitea** | Git Service | https://gitea.lostack.internal |
+| **Jupyter** | Python notebooks | https://jupyter.lostack.internal/ |
 
 ### Utility Applications
 
 | Service | Purpose | Access URL |
 |---------|---------|------------|
-| **IT-Tools** | Developer utilities | https://it-tools.lostack.internal/ |
-| **Excalidraw** | Diagramming | https://excalidraw.lostack.internal/ |
-| **CyberChef** | Data manipulation | https://cyberchef.lostack.internal/ |
 | **ByteStash** | Code snippets | https://bytestash.lostack.internal/ |
+| **CyberChef** | Data manipulation | https://cyberchef.lostack.internal/ |
+| **Excalidraw** | Diagramming | https://excalidraw.lostack.internal/ |
+| **IT-Tools** | Developer utilities | https://it-tools.lostack.internal/ |
 | **Tasks** | Todo management | https://tasks.lostack.internal/ |
 
 ### File Services
@@ -256,7 +257,7 @@ LoStack includes a comprehensive suite of services:
 LoStack replaces Ubuntu's systemd-resolved with CoreDNS to provide:
 - Local domain resolution (*.lostack.internal)
 - Automatic service discovery
-- Integration with existing DNS infrastructure
+- Clearer control over Docker Service DNS
 
 ## Usage
 
@@ -410,11 +411,6 @@ If you enable this you will need to create a "gitea_users" group in Ldap User Ma
 - Check Gitea logs: `sudo docker logs gitea`
 - Verify LDAP structure matches the configuration
 - Ensure groups exist in LDAP before using group filters
-
-#### Alternative User Filter Examples:
-- **Simple UID only**: `(uid=%[1]s)`
-- **UID or Email**: `(|(uid=%[1]s)(mail=%[1]s))`
-- **With group membership**: `(&(objectClass=inetOrgPerson)(uid=%[1]s)(memberOf=cn=gitea_users,ou=groups,dc=lostack,dc=internal))`
 
 ## Contributing
 
