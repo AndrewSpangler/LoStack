@@ -371,7 +371,7 @@ sudo docker compose exec openldap slapadd -l ldap-backup.ldif
 3. Navigate to **Authentication Sources**
 4. Click **Add Authentication Source**
 
-#### Basic Settings
+#### Source Settings
 | Field | Value |
 |-------|-------|
 | **Authentication Type** | `LDAP (via BindDN)` |
@@ -388,6 +388,8 @@ sudo docker compose exec openldap slapadd -l ldap-backup.ldif
 | **Surname attribute** | `sn` |
 | **Email attribute** | `mail` |
 | **Admin Filter** | `(memberOf=cn=admins,ou=groups,dc=lostack,dc=internal)` |
+| **Enable user synchronization** | `☑ Checked` |
+| **This Authentication Source is Activated** | `☑ Checked` |
 
 #### Group Verification (Optional)
 
@@ -399,12 +401,6 @@ If you enable this you will need to create a "gitea_users" group in Ldap User Ma
 | **Group Attribute Containing List Of Users** | `memberUid` |
 | **User Attribute Listed in Group** | `uid` |
 | **Verify group membership in LDAP** | `(|(cn=gitea_users)(cn=developers)(cn=admins))` |
-
-#### Additional Settings
-| Field | Value |
-|-------|-------|
-| **Enable user synchronization** | `☑ Checked` |
-| **This Authentication Source is Activated** | `☑ Checked` |
 
 #### After Adding LDAP Authentication:
 1. **Disable registration** in Site Administration → Configuration → Service Settings
