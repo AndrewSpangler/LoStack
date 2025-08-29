@@ -1,35 +1,35 @@
 services:
-  sablier-gui:
-    container_name: sablier-gui
-    hostname: sablier-gui
+  sablier-station:
+    container_name: sablier-station
+    hostname: sablier-station
     networks:
       traefik_network: {}
     stop_signal: SIGINT
     depends_on:
-      - sablier-gui-db
+      - sablier-station-db
     environment:
       - PYTHONUNBUFFERED=1
       - TZ=${TZ}
-      - DB_HOST=sablier-gui-db
+      - DB_HOST=sablier-station-db
       - DB_PORT=3306
       - DB_USER=sablier
       - DB_PASSWORD=${DATABASE_PASSWORD}
-      - DB_NAME=sablier-gui-db
+      - DB_NAME=sablier-station-db
       - DOMAIN_NAME=${DOMAINNAME}
       - SABLIER_URL=http://sablier:10000
       - SABLIER_DEFAULT_SESSION_DURATION=${SABLIER_DEFAULT_SESSION_DURATION}
       - SABLIER_DEFAULT_THEME=${SABLIER_DEFAULT_THEME}
       - TRUSTED_PROXY_IPS=${SABLIER_TRUSTED_PROXY_IPS}
 
-  sablier-gui-db:
+  sablier-station-db:
     image: mariadb:10.11
-    container_name: sablier-gui-db
-    hostname: sablier-gui-sb
+    container_name: sablier-station-db
+    hostname: sablier-station-sb
     networks:
       traefik_network: {}
     environment:
-      - MYSQL_ROOT_PASSWORD=${SABLIER_GUI_DB_ROOT_PASSWORD}
-      - MYSQL_DATABASE=sablier-gui-db
+      - MYSQL_ROOT_PASSWORD=${SABLIER_STATION_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=sablier-station-db
       - MYSQL_USER=sablier
       - MYSQL_PASSWORD=${DATABASE_PASSWORD}
       - TZ=${TZ}

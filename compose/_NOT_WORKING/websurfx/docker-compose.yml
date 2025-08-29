@@ -1,0 +1,27 @@
+services:
+
+  websurfx:
+    image: neonmmd/websurfx:latest
+    hostname: websurfx
+    container_name: websurfx
+    ports:
+      - 8080:8080
+    depends_on:
+      - websurfx-redis
+    links:
+      - websurfx-redis:redis
+    volumes:
+      - ./config.lua:/etc/xdg/websurfx/config.lua
+      - ./allowlist.txt:/etc/xdg/websurfx/allowlist.txt
+      - ./denylist.txt:/etc/xdg/websurfx/denylist.txt
+    restart: unless-stopped
+    networks:
+      - traefik_network
+
+  websurfx-redis:
+    image: redis:latest
+    hostname: websurfx-redis
+    container_name: websurfx-redis
+    restart: unless-stopped
+    networks:
+      - traefik_network

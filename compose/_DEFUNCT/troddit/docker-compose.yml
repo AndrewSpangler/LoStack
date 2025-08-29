@@ -1,0 +1,8 @@
+services:
+  troddit: 
+    image: bsyed/troddit
+    hostname: troddit
+    container_name: troddit
+    restart: unless-stopped
+    networks:
+      - traefik_network

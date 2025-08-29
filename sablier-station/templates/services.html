@@ -1,0 +1,220 @@
+{% extends "core.html" %}
+
+{% block title %}Services - Sablier Admin{% endblock %}
+{% block page_title %}Sablier Services{% endblock %}
+
+{% block nav_actions %}
+<div class="btn-group" role="group">
+    <a href="{{ url_for('service_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>
+        New Service
+    </a>
+    <a href="{{ url_for('service_import') }}" class="btn btn-outline-primary">
+        <i class="bi bi-upload me-1"></i>
+        Import Config
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Services Summary -->
+        <div class="row mb-4">
+            <div class="col-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h4 class="mb-0">{{ services|length }}</h4>
+                                <p class="mb-0 small">Total</p>
+                            </div>
+                            <i class="bi bi-list-ul display-6 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h4 class="mb-0">{{ services|selectattr("enabled")|list|length }}</h4>
+                                <p class="mb-0 small">Enabled</p>
+                            </div>
+                            <i class="bi bi-check-circle display-6 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-4">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h4 class="mb-0">{{ services|rejectattr("enabled")|list|length }}</h4>
+                                <p class="mb-0 small">Disabled</p>
+                            </div>
+                            <i class="bi bi-pause-circle display-6 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services List -->
+        {% if services %}
+        <div class="row">
+            {% for service in services %}
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card service-card h-100 {% if not service.enabled %}service-disabled{% endif %}">
+                    <div class="card-header {% if service.enabled %}{% if service.automatic %}bg-primary text-white{% else %}bg-success text-white{% endif %}{% else %}bg-secondary text-white{% endif %}">
+                        <!-- Service Header -->
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="service_select" value="{{ service.id }}" id="service-{{ service.id }}">
+                                <label class="form-check-label fw-semibold" for="service-{{ service.id }}">
+                                    {{ service.display_name_or_name }}
+                                </label>
+                            </div>
+                            
+                            <div class="service-status">
+                                {% if service.enabled %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Enabled
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-pause-circle me-1"></i>
+                                        Disabled
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Service Details -->
+                        <div class="small text-muted mb-3">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <strong>Service:</strong><br>
+                                    <code class="text-primary">{{ service.name }}</code>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Port:</strong><br>
+                                    <code>{{ service.port }}</code>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Duration:</strong><br>
+                                    {{ service.session_duration }}
+                                </div>
+                                <div class="col-6">
+                                    <strong>Theme:</strong><br>
+                                    {{ service.theme|title }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Service URL -->
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Service URL:</small>
+                            <code class="small text-break">
+                                <a href="https://{{ service.name }}.{{ request.host.split('.', 1)[1]}}/">https://{{ service.name }}.{{ request.host.split('.', 1)[1]}}/</a>
+                            </code>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Footer -->
+                    <div class="card-footer bg-transparent border-top-0">
+                        <div class="d-flex gap-2 flex-wrap">
+
+                            {% if not service.automatic %}
+                                <!-- Quick Toggle -->
+                                <button class="btn btn-sm btn-outline-{{ 'success' if not service.enabled else 'secondary' }} btn-action" 
+                                        onclick="toggleService({{ service.id }})" 
+                                        title="{{ 'Enable' if not service.enabled else 'Disable' }} service">
+                                    <i class="bi bi-{{ 'play' if not service.enabled else 'pause' }}"></i>
+                                </button>
+                                
+                                <!-- Edit -->
+                                <a href="{{ url_for('service_edit', service_id=service.id) }}" 
+                                class="btn btn-sm btn-outline-primary btn-action" 
+                                title="Edit service">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                
+                                <!-- Delete -->
+                                <a href="{{ url_for('service_delete', service_id=service.id) }}" 
+                                class="btn btn-sm btn-outline-danger btn-action" 
+                                title="Delete service">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            
+                            {% else %}
+                                <i class="text-info">Manage service in docker-compose.yml</i>
+                            {% endif %}
+                            
+                            <!-- External Link -->
+                            <a href="https://{{ service.name }}.{{ request.host.split('.', 1)[1] if '.' in request.host else 'example.com' }}/" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-info btn-action ms-auto" 
+                               title="Open service">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">No Services Configured</h4>
+                    <p class="text-muted mb-4">
+                        Get started by creating your first Sablier service configuration.
+                    </p>
+                    <a href="{{ url_for('service_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Create Your First Service
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Enhanced service management functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // Service card animations
+    const serviceCards = document.querySelectorAll('.service-card');
+    serviceCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+{% endblock %}

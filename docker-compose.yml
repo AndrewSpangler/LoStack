@@ -5,6 +5,36 @@ networks:
     external: false
 
 services:
+  ackee:
+    extends:
+      file: compose/ackee/docker-compose.yml
+      service: ackee
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ackee.rule=Host(`ackee.${DOMAINNAME}`)"
+      - "traefik.http.services.ackee.loadbalancer.server.port=3000"
+      - "homepage.name=Ackee"
+      - "homepage.group=Apps"
+      - "homepage.icon=mdi-google-analytics"
+      - "homepage.description=Analytics Tool"
+      - "homepage.href=https://ackee.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=ackee"
+  
+  ackee-mongo:
+    extends:
+      file: compose/ackee/docker-compose.yml
+      service: ackee-mongo
+    volumes:
+      - ${APPDATA_DIR}/ackee/db:/data/db
+    labels:
+      - "homepage.name=Ackee MongoDB"
+      - "homepage.group=Databases"
+      - "homepage.icon=mongodb"
+      - "homepage.description=Ackee Database"
+      - "sablier.enable=true"
+      - "sablier.group=ackee"
+
   arcane:
     extends:
       file: compose/arcane/docker-compose.yml
@@ -70,6 +100,26 @@ services:
       - "homepage.description=Authentication service"
       - "homepage.href=https://authelia.${DOMAINNAME}/"
 
+  bepasty:
+    extends:
+      file: compose/bepasty/docker-compose.yml
+      service: bepasty
+    volumes:
+      - ${APPDATA_DIR}/bepasty:/srv/bepasty
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bepasty.entrypoints=https"
+      - "traefik.http.routers.bepasty.rule=Host(`bepasty.${DOMAINNAME}`)"
+      - "traefik.http.services.bepasty.loadbalancer.server.port=5000"
+      - "homepage.name=BePasty"
+      - "homepage.group=Pastebins"
+      - "homepage.icon=mdi-clipboard-outline"
+      - "homepage.description=Code Snippets"
+      - "homepage.href=https://bepasty.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=bepasty"
+      - "sablier-station.duration=30m"
+
   bytestash:
     extends:
       file: compose/audiobookshelf/docker-compose.yml
@@ -82,7 +132,7 @@ services:
       - "traefik.http.routers.bytestash.rule=Host(`bytestash.${DOMAINNAME}`)"
       - "traefik.http.services.bytestash.loadbalancer.server.port=5000"
       - "homepage.name=ByteStash"
-      - "homepage.group=Development"
+      - "homepage.group=Pastebins"
       - "homepage.icon=bytestash"
       - "homepage.description=Code Snippets"
       - "homepage.href=https://bytestash.${DOMAINNAME}/"
@@ -144,6 +194,24 @@ services:
       - "sablier.enable=true"
       - "sablier.group=cyberchef"
 
+  daily-stars:
+    extends:
+      file: compose/daily-stars/docker-compose.yml
+      service: daily-stars
+    env_file:
+      - .env 
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.daily-stars.rule=Host(`daily-stars.${DOMAINNAME}`)"
+      - "traefik.http.services.daily-stars.loadbalancer.server.port=8080"
+      - "homepage.name=Daily Stars Explorer"
+      - "homepage.group=Admin"
+      - "homepage.icon=mdi-star-shooting-outline"
+      - "homepage.description=Github Repo Stars Explorer"
+      - "homepage.href=https://daily-stars.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=daily-stars"
+
   dozzle:
     extends:
       file: compose/dozzle/docker-compose.yml
@@ -161,6 +229,24 @@ services:
       - "homepage.href=https://dozzle.${DOMAINNAME}/"
       - "sablier.enable=true"
       - "sablier.group=dozzle"
+
+  dpaste:
+    extends:
+      file: compose/dpaste/docker-compose.yml
+      service: dpaste
+    volumes:
+      - ${APPDATA_DIR}/dpaste:/db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dpaste.rule=Host(`dpaste.${DOMAINNAME}`)"
+      - "traefik.http.services.dpaste.loadbalancer.server.port=8000"
+      - "homepage.name=Dpaste"
+      - "homepage.group=Pastebins"
+      - "homepage.icon=mdi-clipboard-outline"
+      - "homepage.description=Paste Service"
+      - "homepage.href=https://dpaste.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=dpaste"
 
   excalidraw:
     extends:
@@ -403,7 +489,7 @@ services:
     extends:
       file: compose/ldap-user-manager/docker-compose.yml
       service: ldap-user-manager
-    ports:
+    ports: # Enable for first-time-setup of openldap
       - ${LDAP_USER_MANAGER_PORT}:80
     labels:
       - "traefik.enable=true"
@@ -417,6 +503,24 @@ services:
       - "homepage.href=https://ldap-user-manager.${DOMAINNAME}/"
       - "sablier.enable=true"
       - "sablier.group=ldap-user-manager"
+
+  lenpaste:
+    extends:
+      file: compose/lenpaste/docker-compose.yml
+      service: lenpaste
+    volumes:
+      - ${APPDATA_DIR}/lenpaste:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.linkding.rule=Host(`lenpaste.${DOMAINNAME}`)"
+      - "traefik.http.services.lenpaste.loadbalancer.server.port=80"
+      - "homepage.name=Lenpaste"
+      - "homepage.group=Pastebins"
+      - "homepage.icon=mdi-clipboard-outline"
+      - "homepage.description=Pastebin Alternative with API"
+      - "homepage.href=https://lenpaste.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=lenpaste"
 
   linkding:
     extends:
@@ -483,6 +587,24 @@ services:
       - "sablier.enable=true"
       - "sablier.group=manyfold"
 
+  microbin:
+    extends:
+      file: compose/microbin/docker-compose.yml
+      service: microbin
+    volumes:
+      - ${APPDATA_DIR}/microbin:/app/microbin_data:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.microbin.rule=Host(`microbin.${DOMAINNAME}`)"
+      - "traefik.http.services.microbin.loadbalancer.server.port=8080"
+      - "homepage.name=Microbin"
+      - "homepage.group=Pastebins"
+      - "homepage.icon=microbin"
+      - "homepage.description=Paste Service"
+      - "homepage.href=https://microbin.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=microbin"
+
   miniflux:
     extends:
       file: compose/miniflux/docker-compose.yml
@@ -512,6 +634,53 @@ services:
       - "homepage.description=Feed Reader"
       - "sablier.enable=true"
       - "sablier.group=miniflux"
+
+  mixpost:
+    extends:
+      file: compose/mixpost/docker-compose.yml
+      service: mixpost
+    volumes:
+      - ${APPDATA_DIR}/mixpost/app:/var/www/html/storage/app:rw
+      - ${LOGS_DIR}/mixpost:/var/www/html/storage/logs:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mixpost.rule=Host(`mixpost.${DOMAINNAME}`)"
+      - "traefik.http.services.mixpost.loadbalancer.server.port=80"
+      - "homepage.name=MixPost"
+      - "homepage.group=Apps"
+      - "homepage.icon=mixpost"
+      - "homepage.description=Social Media Manager"
+      - "homepage.href=https://mixpost.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=mixpost"
+
+  mixpost-mysql:
+    extends:
+      file: compose/mixpost/docker-compose.yml
+      service: mixpost-mysql
+    volumes:
+      - ${APPDATA_DIR}/mixpost/db:/var/lib/mysql:rw
+    labels:
+      - "homepage.name=MixPost MySQL DB"
+      - "homepage.group=Databases"
+      - "homepage.icon=mysql"
+      - "homepage.description=MixPost MySQL DB"
+      - "sablier.enable=true"
+      - "sablier.group=mixpost"
+
+  mixpost-redis:
+    extends:
+      file: compose/mixpost/docker-compose.yml
+      service: mixpost-redis
+    volumes:
+      - ${APPDATA_DIR}/mixpost/redis:/data
+    labels:
+      - "homepage.name=MixPost Redis DB"
+      - "homepage.group=Databases"
+      - "homepage.icon=redis"
+      - "homepage.description=MixPost Redis DB"
+      - "sablier.enable=true"
+      - "sablier.group=mixpost"
 
   mkcert:
     extends:
@@ -704,42 +873,43 @@ services:
       - "sablier.enable=false"
       - "sablier.group=sablier"
 
-  sablier-gui:
+  sablier-station:
     extends:
-      file: compose/sablier-gui/docker-compose.yml
-      service: sablier-gui
+      file: compose/sablier-station/docker-compose.yml
+      service: sablier-station
     build:
-      context: sablier-gui
+      context: sablier-station
       target: builder
     volumes:
       - ${DOCKER_SOCKET}:/var/run/docker.sock
       - ${CONFIG_DIR}/sablier/sablier-dynamic.yml:/dynamic.yml:rw
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sablier-gui.rule=Host(`sablier-gui.${DOMAINNAME}`)"
-      - "traefik.http.services.sablier-gui.loadbalancer.server.port=80"
+      - "traefik.http.routers.sablier-station.rule=Host(`sablier-station.${DOMAINNAME}`)"
+      - "traefik.http.services.sablier-station.loadbalancer.server.port=80"
       - "traefik.docker.network=traefik_network"
-      - "homepage.name=Sablier GUI"
+      - "homepage.name=Sablier Station"
       - "homepage.group=Admin"
       - "homepage.icon=mdi-rocket-launch"
       - "homepage.description=Container Auto-Start"
-      - "homepage.href=https://sablier-gui.${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=sablier-gui"
+      - "homepage.href=https://sablier-station.${DOMAINNAME}/"
+      # - "sablier.enable=true"
+      # - "sablier.group=sablier-station"
+      
 
-  sablier-gui-db:
+  sablier-station-db:
     extends:
-      file: compose/sablier-gui/docker-compose.yml
-      service: sablier-gui-db
+      file: compose/sablier-station/docker-compose.yml
+      service: sablier-station-db
     volumes:
-      - ${APPDATA_DIR}/sablier-gui-db/:/var/lib/mysql
+      - ${APPDATA_DIR}/sablier-station-db/:/var/lib/mysql
     labels:
       - "homepage.name=Sablier GUI MariaDB"
       - "homepage.group=Databases"
       - "homepage.icon=mariadb"
       - "homepage.description=Container Auto-Start"
-      - "sablier.enable=true"
-      - "sablier.group=sablier-gui"
+      # - "sablier.enable=true"
+      # - "sablier.group=sablier-station"
     
   serve:
     extends:
@@ -812,8 +982,8 @@ services:
 
   traefik:
     extends:
-      file: compose/teammapper/docker-compose.yml
-      service: teammapper
+      file: compose/traefik/docker-compose.yml
+      service: traefik
     ports:
       - ${TRAEFIK_PORT_HTTP}:80
       - ${TRAEFIK_PORT_HTTPS}:443
@@ -861,3 +1031,52 @@ services:
       - "homepage.icon=traefik"
       - "homepage.description=Traefik proxy dashboard"
       - "homepage.href=https://traefik.${DOMAINNAME}/"
+  
+  # troddit:
+  #   extends:
+  #     file: compose/troddit/docker-compose.yml
+  #     service: troddit
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.troddit.rule=Host(`troddit.${DOMAINNAME}`)"
+  #     - "traefik.http.services.troddit.loadbalancer.server.port=3000"
+  #     - "homepage.name=Troddit"
+  #     - "homepage.group=Apps"
+  #     - "homepage.icon=troddit"
+  #     - "homepage.description=Reddit Web Client"
+  #     - "homepage.href=https://troddit.${DOMAINNAME}/"
+  #     - "sablier.enable=true"
+  #     - "sablier.group=troddit"
+
+  # websurfx:
+  #   extends:
+  #     file: compose/websurfx/docker-compose.yml
+  #     service: websurfx
+  #   dns:
+  #     - 8.8.8.8 # To resolve the useragent site
+  #   volumes:
+  #     - ${APPDATA_DIR}/websurfx/:/etc/xdg/websurfx/
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.websurfx.rule=Host(`websurfx.${DOMAINNAME}`)"
+  #     - "traefik.http.services.websurfx.loadbalancer.server.port=8080"
+  #     - "homepage.name=WebsurfX"
+  #     - "homepage.group=Apps"
+  #     - "homepage.icon=websurfx"
+  #     - "homepage.description=Search Aggregator"
+  #     - "homepage.href=https://websurfx.${DOMAINNAME}/"
+  #     - "sablier.enable=true"
+  #     - "sablier.group=websurfx"
+
+  # websurfx-redis:
+  #   extends:
+  #     file: compose/websurfx/docker-compose.yml
+  #     service: websurfx-redis
+  #   labels:
+  #     - "homepage.name=WebsurfX Redis DB"
+  #     - "homepage.group=Databases"
+  #     - "homepage.icon=redis"
+  #     - "homepage.description=WebsurfX Redis DB"
+  #     - "homepage.href=https://websurfx.${DOMAINNAME}/"
+  #     - "sablier.enable=true"
+  #     - "sablier.group=websurfx"

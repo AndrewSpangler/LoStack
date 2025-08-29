@@ -1,0 +1,52 @@
+services: 
+
+  mixpost:
+    image: inovector/mixpost:latest
+    container_name: mixpost
+    hostname: mixpost
+    networks:
+     - traefik_network
+    environment:
+      APP_NAME: Mixpost
+      APP_KEY: ${MIXPOST_KEY}
+      APP_DOMAIN: mixpost.${DOMAINNAME}
+      APP_URL: https://mixpost.${DOMAINNAME}
+      DB_DATABASE: mixpost_db
+      DB_USERNAME: mixpost_user
+      DB_HOST: mixpost-mysql
+      DB_PASSWORD: ${DATABASE_PASSWORD}
+      READIS_HOST: mixpost-redis
+      SSL_EMAIL: admin@lostack.internal
+    depends_on:
+      - mixpost-mysql
+      - mixpost-redis 
+    restart: unless-stopped
+
+  mixpost-mysql:
+    image: 'mysql/mysql-server:8.0'
+    container_name: mixpost-mysql
+    hostname: mixpost-mysql
+    networks:
+     - traefik_network
+    environment:
+      MYSQL_DATABASE: mixpost_db
+      MYSQL_USER: mixpost_user
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p ${DATABASE_PASSWORD}"]
+      retries: 3
+      timeout: 5s
+    restart: unless-stopped
+
+  mixpost-redis:
+    image: 'redis:latest'
+    container_name: mixpost-redis
+    hostname: mixpost-redis
+    networks:
+     - traefik_network
+    command: redis-server --appendonly yes --replica-read-only no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      retries: 3
+      timeout: 5s
+    restart: unless-stopped  

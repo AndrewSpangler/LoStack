@@ -1,0 +1,8 @@
+services:
+  bepasty:
+    image: asmaps/bepasty
+    hostname: bepasty
+    container_name: bepasty
+    restart: always
+    networks:
+      - traefik_network
