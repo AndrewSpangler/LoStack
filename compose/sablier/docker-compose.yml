@@ -1,0 +1,13 @@
+services:
+  sablier:
+    image: sablierapp/sablier:latest
+    container_name: sablier
+    hostname: sablier
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    command:
+      - start
+      - --provider.name=docker
+      - --logging.level=debug
+ 

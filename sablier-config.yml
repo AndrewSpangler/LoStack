@@ -2,11 +2,11 @@ services:
   arcane:
     displayName: Arcane
     url: http://arcane:3000/
-    sessionDuration: 5m
+    sessionDuration: 15m
   bytestash:
     displayName: ByteStash
     url: http://bytestash:5000/
-    sessionDuration: 5m
+    sessionDuration: 30m
   code-server:
     displayName: Code Server
     url: http://code-server:8443/
@@ -14,11 +14,11 @@ services:
   cyberchef:
     displayName: CyberChef
     url: http://cyberchef:8000/
-    sessionDuration: 5m
+    sessionDuration: 15m
   dozzle:
     displayName: Dozzle
     url: http://dozzle:8080/
-    sessionDuration: 5m
+    sessionDuration: 15m
   excalidraw:
     displayName: Excalidraw
     url: http://excalidraw:80/
@@ -48,48 +48,61 @@ services:
   hrconvert:
     displayName: HRConvert
     url: http://hrconvert:80/
-    sessionDuration: 5m
+    sessionDuration: 15m
   it-tools:
     displayName: IT-Tools
     url: http://it-tools:80/
-    sessionDuration: 5m
+    sessionDuration: 15m
   jupyter:
     displayName: Jupyter
     url: http://jupyter:8888/
     sessionDuration: 1h
+  kavita:
+    displayName: Kavita
+    url: http://kavita:5000/
+    sessionDuration: 30m
   ldap-user-manager:
     displayName: Ldap User Manager
     url: http://ldap-user-manager:80/
-    sessionDuration: 5m
+    sessionDuration: 15m
   linkding:
     displayName: linkding
     url: http://linkding:9090/
-    sessionDuration: 5m
+    sessionDuration: 15m
   manyfold:
     displayName: Manyfold
     url: http://manyfold:3214/
     names: manyfold-postgres,manyfold-redis
-    sessionDuration: 5m
+    sessionDuration: 15m
+  miniflux:
+    displayName: Miniflux
+    url: http://miniflux:8080/
+    names: miniflux-db
+    sessionDuration: 15m
   morphos:
     displayName: Morphos
     url: http://morphos:8080/
-    sessionDuration: 5m
+    sessionDuration: 15m
+  navidrome:
+    displayName: Navidrome
+    url: http://naivdrome:4523/
+    sessionDuration: 30m
   olivetin:
     displayName: OliveTin
     url: http://olivetin:1337/
-    sessionDuration: 5m
+    sessionDuration: 15m
   omni-tools:
     displayName: Omni-tools
     url: http://omni-tools:80/
-    sessionDuration: 5m
+    sessionDuration: 15m
   pairdrop:
     displayName: Pairdrop
     url: http://pairdrop:3000/
-    sessionDuration: 5m
+    sessionDuration: 15m
   redis-insight:
     displayName: Redis Insight
     url: http://redis-insight:5540/
-    sessionDuration: 5m
+    sessionDuration: 15m
   reubah:
     displayName: Reubah
     url: http://reubah:8081/
@@ -106,4 +119,9 @@ services:
   tasks:
     displayName: Tasks
     url: http://tasks:8080/
-    sessionDuration: 5m
+    sessionDuration: 15m
+  teammapper:
+    displayName: TeamMapper
+    url: http://teammapper:8080/
+    names: teammapper-postgres
+    sessionDuration: 15m

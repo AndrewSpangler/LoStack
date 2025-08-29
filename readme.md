@@ -263,13 +263,15 @@ LoStack replaces Ubuntu's systemd-resolved with CoreDNS to provide:
 
 Only containers with multi-user support are listed.
 
-| Service | OpenLDAP | Auto Sign-In |
-| Linkding | -> | Yes (Default) |
-| Ldap User Manager | -> | Yes (Enable in ENV after setup) |
-| Gitea | Yes (See setup guide) | Yes (WIP - not enabled yet) |
-| FreshRSS | -> | Yes (See setup guide) |
-| Filebrowser | -> | Yes (With some effort) (See https://github.com/hurlenko/filebrowser-docker/issues/48) |
 
+| Service | OpenLDAP | Auto Sign-In | User Creation |
+|---------|----------|--------------|---------------|
+| Linkding | -> | Yes (Default) | Automatic |
+| Ldap User Manager | -> | Yes (Enable in ENV after setup) | This is the creator |
+| Gitea | Yes (See setup guide) | Yes (WIP - not enabled yet) | Yes (WIP) |
+| FreshRSS | -> | Yes (See setup guide) | Yes |
+| Filebrowser | -> | Yes (With some effort)[https://github.com/hurlenko/filebrowser-docker/issues/48] | Yes |
+| Miniflux | -> | Yes | Yes |
 
 
 ## Usage

@@ -1,0 +1,12 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    hostname: homepage
+    restart: unless-stopped
+    user: root
+    networks:
+      - traefik_network
+    environment:
+      TZ: ${TZ}
+      HOMEPAGE_ALLOWED_HOSTS: ${DOMAINNAME}

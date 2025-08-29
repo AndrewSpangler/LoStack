@@ -1,0 +1,18 @@
+services:
+  coredns:
+    image: coredns/coredns
+    container_name: coredns
+    hostname: coredns
+    network_mode: host
+    restart: unless-stopped
+    command: -conf /data/Corefile
+    ports:
+      - ${CORE_DNS_PORT}:53/tcp
+      - ${CORE_DNS_PORT}:53/udp
+    environment:
+      HOST_IP: ${HOST_IP}
+      HOSTNAME: ${HOSTNAME}
+      DOMEXT: ${DOMEXT}
+      DOMAINNAME: ${DOMAINNAME}
+      DNS_IP: ${DNS_IP}
+      DNS_EXPIRATION_TIME: ${DNS_EXPIRATION_TIME}

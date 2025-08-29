@@ -1,0 +1,16 @@
+services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    hostname: code-server
+    restart: always
+    networks:
+      - traefik_network
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: ${TZ}
+      DEFAULT_WORKSPACE: ${CODE_SERVER_WORKSPACE}
+      PASSWORD: ${ADMIN_PASSWORD}
+      SUDO_PASSWORD: ${SUDO_PASSWORD}
+      PROXY_DOMAIN: code-server.${DOMAINNAME}

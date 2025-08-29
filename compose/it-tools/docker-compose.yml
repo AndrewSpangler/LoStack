@@ -1,0 +1,12 @@
+services:
+  it-tools:
+    image: corentinth/it-tools
+    container_name: it-tools
+    hostname: it-tools
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    environment:
+      PUID: 1024
+      PGID: 101
+      TZ: ${TZ}

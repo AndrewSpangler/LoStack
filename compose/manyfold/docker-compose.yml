@@ -1,0 +1,55 @@
+services:
+  manyfold:
+    image: ghcr.io/manyfold3d/manyfold:latest
+    hostname: manyfold
+    container_name: manyfold
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
+    environment:
+      PUID: 1000 # The ID of the user the app will run as
+      PGID: 1000 # The ID of the group the app will run as
+      SECRET_KEY_BASE: ${MANYFOLD_SECRET_KEY}
+      REDIS_URL: redis://manyfold-redis:6379/1
+      # Database connection details; we recommend using a separate PostgreSQL
+      # server for best performance
+      DATABASE_ADAPTER: postgresql
+      DATABASE_HOST: manyfold-postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: manyfold
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: manyfold
+    depends_on:
+      - manyfold-postgres
+      - manyfold-redis
+    networks:
+      - traefik_network
+    links:
+      - manyfold-postgres
+      - manyfold-redis
+
+  manyfold-postgres:
+    image: postgres:15
+    hostname: manyfold-postgres
+    container_name: manyfold-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: manyfold
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    networks:
+      - traefik_network
+
+  manyfold-redis:
+    image: redis:7
+    hostname: manyfold-redis
+    container_name: manyfold-redis
+    restart: unless-stopped
+    networks:
+      - traefik_network

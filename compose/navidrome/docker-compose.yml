@@ -1,0 +1,16 @@
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    hostname: navidrome
+    networks:
+      - traefik_network
+    restart: unless-stopped
+    environment:
+      -ND_SCANSCHEDULE: 1h
+      -ND_LOGLEVEL: info  
+      -ND_SESSIONTIMEOUT: 24h
+      -ND_BASEURL: ""
+      -PUID: 1024
+      -PGID: 101
+      -TZ: ${TZ}

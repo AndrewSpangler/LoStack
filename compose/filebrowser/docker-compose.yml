@@ -1,0 +1,11 @@
+services:
+  filebrowser:
+    image: filebrowser/filebrowser
+    container_name: filebrowser
+    hostname: filebrowser
+    restart: unless-stopped
+    user: "1000:1000"
+    networks:
+      - traefik_network
+    environment:
+      TZ: ${TZ}

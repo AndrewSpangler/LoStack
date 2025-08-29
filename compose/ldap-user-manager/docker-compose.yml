@@ -1,0 +1,28 @@
+services:
+  ldap-user-manager:
+    image: wheelybird/ldap-user-manager:v1.9
+    container_name: ldap-user-manager
+    hostname: ldap-user-manager
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    depends_on:
+      - openldap
+    environment:
+      TZ: $TZ
+      SERVER_HOSTNAME: ldap-user-manager.${DOMAINNAME}
+      ORGANISATION_NAME: ${LDAP_ORGANISATION}
+      LDAP_URI: "ldap://openldap:${OPENLDAP_PORT}"
+      LDAP_BASE_DN: "${LDAP_BASE_DN}"
+      LDAP_ADMINS_GROUP: "admins"
+      LDAP_ADMIN_BIND_DN: "cn=${LDAP_ADMIN_USER},${LDAP_BASE_DN}"
+      LDAP_ADMIN_BIND_PWD: ${LDAP_ADMIN_PASSWORD} 
+      LDAP_DEBUG: "true"
+      LDAP_IGNORE_CERT_ERRORS: "true"
+      LDAP_REQUIRE_STARTTLS: "false"
+      LDAP_DOMAIN: "${DOMAINNAME}"
+      EMAIL_DOMAIN: "@${DOMAINNAME}"
+      NO_HTTPS: "true"
+      ACCEPT_WEAK_PASSWORDS : ${LDAP_ACCEPT_WEAK_PASSWORDS}
+      EMAIL_FROM_ADDRESS: "${LDAP_ADMIN_USER}@${DOMAINNAME}"
+      REMOTE_HTTP_HEADERS_LOGIN: "${LUM_REMOTE_HTTP_HEADERS_LOGIN}"

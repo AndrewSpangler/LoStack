@@ -1,0 +1,35 @@
+services:
+  teammapper:
+    image: ghcr.io/b310-digital/teammapper:latest
+    container_name: teammapper
+    hostname: teammapper
+    networks:
+      - traefik_network
+    environment:
+      MODE: PROD
+      BINDING: "0.0.0.0"
+      POSTGRES_DATABASE: teammapper-db
+      POSTGRES_HOST: teammapper-postgres
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_PORT: 5432
+      POSTGRES_SSL: false
+      POSTGRES_SSL_REJECT_UNAUTHORIZED: false
+      POSTGRES_USER: teammapper-user
+      POSTGRES_QUERY_TIMEOUT: 100000
+      POSTGRES_STATEMENT_TIMEOUT: 100000
+      DELETE_AFTER_DAYS: 999999
+    depends_on:
+      - teammapper-postgres
+
+  teammapper-postgres:
+    image: postgres:12-alpine
+    container_name: teammapper-postgres
+    hostname: teammapper-postgres
+    networks:
+      - traefik_network
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: teammapper-db
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: teammapper-user

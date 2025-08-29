@@ -1,0 +1,34 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    hostname: traefik
+    restart: unless-stopped
+    networks:
+      traefik_network:
+        aliases:
+          - 'traefik'
+          - 'traefik.${DOMAINNAME}'
+          - '${AUTHELIA_PREFIX}.${DOMAINNAME}'
+    dns:
+      - ${DNS_IP}
+      - ${HOST_IP}
+    environment:
+      TZ: ${TZ}
+      DOMAINNAME: ${DOMAINNAME}
+    command:
+      - "--global.sendAnonymousUsage=false"
+      - "--global.checkNewVersion=false"
+      - "--log.level=DEBUG"
+      - "--log.filepath=logs/traefik.log"
+      - "--api.dashboard=true"
+      - "--entrypoints.https.address=:443"
+      - "--entrypoints.https.http.middlewares=authelia@docker"
+      - "--entrypoints.https.http.tls=true"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.http.http.middlewares=redirect-to-https"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.file.directory=/dynamic/"
+      - "--providers.file.watch=true"
+      - "--experimental.localPlugins.sablier.modulename=github.com/sablierapp/sablier"

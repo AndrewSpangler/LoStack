@@ -1,0 +1,7 @@
+services:
+  hrconvert:
+    image: dwaaan/hrconvert2-docker:latest
+    container_name: hrconvert
+    restart: unless-stopped
+    networks:
+      - traefik_network

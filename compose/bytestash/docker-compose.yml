@@ -1,0 +1,16 @@
+services:
+  bytestash:
+    image: ghcr.io/jordan-dalby/bytestash:latest
+    hostname: bytestash
+    container_name: bytestash
+    restart: always
+    networks:
+      - traefik_network
+    environment:
+      BASE_PATH: ${BYTESTASH_BASE_PATH}
+      JWT_SECRET: ${BYTESTASH_JWT_SECRET}
+      TOKEN_EXPIRY: 24h
+      ALLOW_NEW_ACCOUNTS: ${BYTESTASH_ALLOW_NEW_ACCOUNTS}
+      DEBUG: ${BYTESTASH_DEBUG}
+      DISABLE_ACCOUNTS: ${BYTESTASH_DISABLE_ACCOUNTS}
+      DISABLE_INTERNAL_ACCOUNTS: ${BYTESTASH_DISABLE_INTERNAL_ACCOUNTS}

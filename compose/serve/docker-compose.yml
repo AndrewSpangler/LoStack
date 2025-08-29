@@ -1,0 +1,30 @@
+services:
+  serve:
+    image: nginx:latest
+    container_name: serve
+    hostname: serve
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    environment:
+      AUTO_INDEX: on
+    entrypoint: >
+      /bin/sh -c "
+      echo 'events {}' > /etc/nginx/nginx.conf && \
+      echo 'http {
+        server {
+          listen 80;
+
+          location / {
+            root /usr/share/nginx/html;
+            autoindex on;
+          }
+
+          location /sprays/ {
+            root /usr/share/nginx/html;
+            autoindex on;
+          }
+        }
+      }' >> /etc/nginx/nginx.conf && \
+      nginx -g 'daemon off;'
+      "

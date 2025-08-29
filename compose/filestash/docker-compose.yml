@@ -1,0 +1,30 @@
+services:
+  filestash:
+    image: machines/filestash:latest
+    container_name: filestash
+    hostname: filestash
+    restart: always
+    depends_on:
+      - filestash-onlyoffice
+    environment:
+      - APPLICATION_URL=filestash.${DOMAINNAME}
+      - CANARY=true
+      - ONLYOFFICE_URL=http://filestash-onlyoffice
+
+  filestash-onlyoffice:
+    image: onlyoffice/documentserver
+    container_name: filestash-onlyoffice
+    hostname: filestash-onlyoffice
+    restart: always
+    security_opt:
+      - seccomp:unconfined
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filestash-onlyoffice.rule=Host(`filestash-onlyoffice.${DOMAINNAME}`)"
+      - "homepage.name=FileStash OnlyOffice"
+      - "homepage.group=Services"
+      - "homepage.icon=onlyoffice"
+      - "homepage.description=File Transfers"
+      - "homepage.href=https://filestash-onlyoffice.${DOMAINNAME}/"
+      - "sablier.enable=true"
+      - "sablier.group=filestash"

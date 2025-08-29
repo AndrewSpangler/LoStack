@@ -1,0 +1,8 @@
+services:
+  olivetin:
+    image: jamesread/olivetin
+    container_name: olivetin
+    hostname: olivetin
+    restart: unless-stopped
+    networks:
+      - traefik_network

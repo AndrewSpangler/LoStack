@@ -1,0 +1,12 @@
+services:
+  reubah:
+    image: ghcr.io/dendianugerah/reubah:latest
+    container_name: reubah
+    hostname: reubah
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

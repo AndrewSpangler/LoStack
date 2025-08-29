@@ -1,0 +1,11 @@
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    hostname: audiobookshelf
+    container_name: audiobookshelf
+    environment:
+      -PUID: 1024
+      -PGID: 101
+      -TZ: ${TZ}
+    networks:
+      - traefik_network

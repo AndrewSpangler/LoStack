@@ -1,0 +1,8 @@
+services:
+  mkcert:
+    image: vishnunair/docker-mkcert
+    container_name: mkcert
+    hostname: mkcert
+    restart: unless-stopped
+    environment: 
+      domain: ${DOMAINNAME},*.${DOMAINNAME}
