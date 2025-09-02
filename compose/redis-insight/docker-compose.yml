@@ -1,8 +1,0 @@
-services:
-  redis-insight:
-    image: redis/redisinsight:latest
-    hostname: redist-insight
-    container_name: redis-insight
-    restart: always
-    networks:
-      - traefik_network

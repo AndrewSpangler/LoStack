@@ -1,0 +1,36 @@
+services:
+  lostack:
+    container_name: lostack
+    hostname: lostack
+    networks:
+      traefik_network: {}
+    stop_signal: SIGINT
+    depends_on:
+      - lostack-db
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ}
+      - DB_HOST=lostack-db
+      - DB_PORT=3306
+      - DB_USER=lostack
+      - DB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_NAME=lostack-db
+      - DOMAINNAME=${DOMAINNAME}
+      - DOMAIN_NAME=${DOMAINNAME}
+      - SABLIER_URL=http://sablier:10000
+      - SABLIER_DEFAULT_SESSION_DURATION=${SABLIER_DEFAULT_SESSION_DURATION}
+      - SABLIER_DEFAULT_THEME=${SABLIER_DEFAULT_THEME}
+      - TRUSTED_PROXY_IPS=${SABLIER_TRUSTED_PROXY_IPS}
+
+  lostack-db:
+    image: mariadb:10.11
+    container_name: lostack-db
+    hostname: lostack-db
+    networks:
+      traefik_network: {}
+    environment:
+      - MYSQL_ROOT_PASSWORD=${SABLIER_STATION_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=lostack-db
+      - MYSQL_USER=lostack
+      - MYSQL_PASSWORD=${DATABASE_PASSWORD}
+      - TZ=${TZ}

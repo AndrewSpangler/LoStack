@@ -7,11 +7,36 @@ mkdir -p ./appdata
 mkdir -p ./appdata/redis-insight
 sudo chmod -R 666 ./appdata/redist-insight 
 
+mkdir -p ./certs
+mkdir -p ./logs
+
 mkdir -p ./media
 mkdir -p ./media/audiobooks
 mkdir -p ./media/books
+mkdir -p ./media/comics
+mkdir -p ./media/documents
+mkdir -p ./media/images
+mkdir -p ./media/manga
 mkdir -p ./media/models
 mkdir -p ./media/movies
 mkdir -p ./media/music
+mkdir -p ./media/podcasts
+mkdir -p ./media/recordings
 mkdir -p ./media/tv
+mkdir -p ./media/www
+mkdir -p ./media/youtube
+mkdir -p ./media/downloads/audiobooks
+mkdir -p ./media/downloads/books
+mkdir -p ./media/downloads/comics
+mkdir -p ./media/downloads/documents
+mkdir -p ./media/downloads/images
+mkdir -p ./media/downloads/manga
+mkdir -p ./media/downloads/models
+mkdir -p ./media/downloads/movies
+mkdir -p ./media/downloads/music
+mkdir -p ./media/downloads/podcasts
+mkdir -p ./media/downloads/recordings
+mkdir -p ./media/downloads/tv
+mkdir -p ./media/downloads/www
+mkdir -p ./media/downloads/youtube
 sudo chmod -R 666 ./media

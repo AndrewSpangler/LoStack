@@ -1,8 +1,0 @@
-services:
-  tasks:
-    image: baldissaramatheus/tasks.md
-    container_name: tasks
-    hostname: tasks
-    restart: unless-stopped
-    networks:
-      - traefik_network

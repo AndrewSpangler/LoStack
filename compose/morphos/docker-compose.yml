@@ -1,8 +1,0 @@
-services:
-  morphos:
-    image: ghcr.io/danvergara/morphos-server:latest
-    container_name: morphos
-    hostname: morphos
-    restart: unless-stopped
-    networks:
-      - traefik_network

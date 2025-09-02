@@ -16,7 +16,7 @@ services:
       AUTHELIA_SERVER_BUFFERS_WRITE: 16384
       AUTHELIA_LOG_LEVEL: info
       AUTHELIA_LOG_FORMAT: text
-      AUTHELIA_LOG_FILE_PATH: /config/authelia.log
+      AUTHELIA_LOG_FILE_PATH: /logs/authelia/authelia.log
       AUTHELIA_LOG_KEEP_STDOUT: false
       AUTHELIA_REGULATION_MAX_RETRIES: 10
       AUTHELIA_REGULATION_FIND_TIME: 2 minutes
@@ -39,6 +39,45 @@ services:
       DOMAINNAME: ${DOMAINNAME}
       LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD}
       CUST_AUTHELIA_PREFIX: ${AUTHELIA_PREFIX}
-      CUST_AUTHELIA_JWT_SECRET: ${AUTHELIA_JWT_SECRET}
-      CUST_AUTHELIA_STORAGE_ENCRYPTION_KEY: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
-      CUST_AUTHELIA_SESSION_SECRET: ${AUTHELIA_SESSION_SECRET}
+    entrypoint: |
+      sh -c '
+      set -e
+      
+      SECRETS_DIR="/lostack_secrets"
+      
+      # Create secrets directory if it doesn''t exist
+      mkdir -p "$$SECRETS_DIR"
+      
+      # Function to generate a random key
+      generate_key() {
+          local length=$${1:-64}
+          dd if=/dev/urandom bs=1 count=$$length 2>/dev/null | base64 | tr -d "\n" | head -c $$length
+      }
+      
+      # Function to generate or read secret
+      get_or_create_secret() {
+          local secret_name="$$1"
+          local secret_file="$$SECRETS_DIR/$$secret_name"
+          
+          if [ ! -f "$$secret_file" ]; then
+              echo "Generating new secret: $$secret_name"
+              generate_key 64 > "$$secret_file"
+              chmod 600 "$$secret_file"
+          else
+              echo "Using existing secret: $$secret_name"
+          fi
+          
+          cat "$$secret_file"
+      }
+      
+      # Generate or read required secrets
+      echo "Initializing Authelia secrets..."
+      
+      export CUST_AUTHELIA_JWT_SECRET=$$(get_or_create_secret "jwt_secret")
+      export CUST_AUTHELIA_STORAGE_ENCRYPTION_KEY=$$(get_or_create_secret "storage_encryption_key")
+      export CUST_AUTHELIA_SESSION_SECRET=$$(get_or_create_secret "session_secret")
+      
+      echo "Secrets initialized successfully"
+      echo "Starting Authelia..."
+      exec /app/entrypoint.sh
+      '

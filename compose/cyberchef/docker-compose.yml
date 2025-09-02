@@ -1,8 +1,0 @@
-services:
-  cyberchef:
-    image: mpepping/cyberchef:latest
-    container_name: cyberchef
-    hostname: cyberchef
-    restart: unless-stopped
-    networks:
-      - traefik_network

@@ -3,6 +3,6 @@ services:
     image: vishnunair/docker-mkcert
     container_name: mkcert
     hostname: mkcert
-    restart: unless-stopped
+    restart: no
     environment: 
       domain: ${DOMAINNAME},*.${DOMAINNAME}

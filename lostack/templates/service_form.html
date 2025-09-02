@@ -1,0 +1,338 @@
+{% extends "core.html" %}
+
+{% block title %}{{ action }} Service - LoStack Admin{% endblock %}
+
+{% block page_title %}{{ action }} Service{% endblock %}
+
+{% block nav_actions %}
+<a href="{{ url_for('services') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>
+    Back to Services
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-{% if action == 'Edit' %}pencil-square{% else %}plus-circle{% endif %} me-2"></i>
+                    {{ action }} Service
+                </h5>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Service Name -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ form.name.label(class="form-label fw-semibold") }}
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.name.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Internal service name (used in Docker/container references)
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.display_name.label(class="form-label fw-semibold") }}
+                            {{ form.display_name(class="form-control" + (" is-invalid" if form.display_name.errors else "")) }}
+                            {% if form.display_name.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.display_name.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Human-readable name shown in the interface (optional)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Theme -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            {{ form.names.label(class="form-label fw-semibold") }}
+                            {{ form.names(class="form-control" + (" is-invalid" if form.names.errors else "")) }}
+                            {% if form.names.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.names.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Service dependencies, use a comma-separated list of names.
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-6">
+                            {{ form.theme.label(class="form-label fw-semibold") }}
+                            {{ form.theme(class="form-select" + (" is-invalid" if form.theme.errors else "")) }}
+                            {% if form.theme.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.theme.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Visual theme for the loading page
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Port -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            {{ form.port.label(class="form-label fw-semibold") }}
+                            {{ form.port(class="form-control" + (" is-invalid" if form.port.errors else "")) }}
+                            {% if form.port.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.port.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Port the service runs on
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form.session_duration.label(class="form-label fw-semibold") }}
+                            {{ form.session_duration(class="form-control" + (" is-invalid" if form.session_duration.errors else "")) }}
+                            {% if form.session_duration.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.session_duration.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Idle time until container shutdown (e.g., 45s, 5m, 1h)
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form.refresh_frequency.label(class="form-label fw-semibold") }}
+                            {{ form.refresh_frequency(class="form-control" + (" is-invalid" if form.refresh_frequency.errors else "")) }}
+                            {% if form.refresh_frequency.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.refresh_frequency.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Loading page refresh interval (e.g., 3s, 10s)
+                            </div>
+                        </div>
+                    </div>
+                                        
+                    <!-- Checkboxes -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.show_details(class="form-check-input" + (" is-invalid" if form.show_details.errors else "")) }}
+                                {{ form.show_details.label(class="form-check-label fw-semibold") }}
+                                {% if form.show_details.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.show_details.errors[0] }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Show info on the loading page
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.enabled(class="form-check-input" + (" is-invalid" if form.enabled.errors else "")) }}
+                                {{ form.enabled.label(class="form-check-label fw-semibold") }}
+                                {% if form.enabled.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.enabled.errors[0] }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Include this service in generated configuration
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('services') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancel
+                        </a>
+                        
+                        <div class="d-flex gap-2">
+                            {% if service and action == 'Edit' %}
+                            <a href="{{ url_for('service_delete', service_id=service.id) }}" 
+                               class="btn btn-outline-danger"
+                               onclick="return confirm('Are you sure you want to delete this service?')">
+                                <i class="bi bi-trash me-1"></i>
+                                Delete
+                            </a>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-{% if action == 'Edit' %}check-circle{% else %}plus-circle{% endif %} me-1"></i>
+                                {{ action }} Service
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Service Preview Card (if editing) -->
+        {% if service and action == 'Edit' %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-eye me-2"></i>
+                    Service Preview
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Service URL:</strong><br>
+                            <code>{{ service.name }}.{{ request.form.get('domain', 'your-domain.com') }}</code>
+                        </p>
+                        <p class="mb-2">
+                            <strong>Internal URL:</strong><br>
+                            <code>http://{{ service.name }}:{{ service.port }}/</code>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <strong>Status:</strong>
+                            <span class="service-status {{ 'status-enabled' if service.enabled else 'status-disabled' }}">
+                                <i class="bi bi-{{ 'check-circle-fill' if service.enabled else 'x-circle-fill' }}"></i>
+                                {{ 'Enabled' if service.enabled else 'Disabled' }}
+                            </span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Display Name:</strong>
+                            {{ service.display_name_or_name }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Additional Help -->
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card border-0 bg-light">
+            <div class="card-body">
+                <h6 class="card-title text-muted">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Configuration Tips
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled small text-muted mb-0">
+                            <li><i class="bi bi-arrow-right me-1"></i> Service names should match Docker container names</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled small text-muted mb-0">
+                            <li><i class="bi bi-arrow-right me-1"></i> Disabled services won't appear in generated config</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Form validation and UX enhancements
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameField = document.getElementById('name');
+    const displayNameField = document.getElementById('display_name');
+    
+    nameField.addEventListener('input', function() {
+        displayNameField.value = this.value
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    });
+
+    
+    // Form validation feedback
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let hasError = false;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                hasError = true;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (hasError) {
+            e.preventDefault();
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
+    
+    // Remove invalid class on input
+    const inputs = form.querySelectorAll('.form-control, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+});
+
+// Service name validation
+function validateServiceName(input) {
+    const value = input.value;
+    const isValid = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/.test(value);
+    
+    if (value && !isValid) {
+        input.setCustomValidity('Service name must contain only lowercase letters, numbers, and hyphens. Cannot start or end with a hyphen.');
+    } else {
+        input.setCustomValidity('');
+    }
+}
+
+// Apply validation to name field
+const nameInput = document.getElementById('name');
+if (nameInput) {
+    nameInput.addEventListener('input', function() {
+        validateServiceName(this);
+    });
+}
+</script>
+{% endblock %}

@@ -1,6 +1,7 @@
 title: LoStack
 theme: dark
 favicon: /images/favicon.ico
+base: https://lostack.internal
 background:
   image: /images/background_gradient.jpg
   saturate: 50
