@@ -1,1 +1,158 @@
 http:
+  middlewares:
+    homepage-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: homepage
+          sessionDuration: 45m
+          dynamic:
+            displayName: Homepage
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+    pastefy-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: pastefy,pastefy-db
+          sessionDuration: 5m
+          dynamic:
+            displayName: Pastefy
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+    offen-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: offen,offen-postgres
+          sessionDuration: 5m
+          dynamic:
+            displayName: Offen
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+    metabase-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: metabase,metabase-postgres
+          sessionDuration: 5m
+          dynamic:
+            displayName: Metabase
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+    serve-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: serve
+          sessionDuration: 5m
+          dynamic:
+            displayName: Serve
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+    ldap-user-manager-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: ldap-user-manager
+          sessionDuration: 5m
+          dynamic:
+            displayName: Ldap-User-Manager
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+    code-server-autostart:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier:10000
+          names: code-server
+          sessionDuration: 5m
+          dynamic:
+            displayName: Code-Server
+            showDetails: true
+            theme: ghost
+            refreshFrequency: 3s
+  services:
+    homepage:
+      loadBalancer:
+        servers:
+        - url: http://homepage:3000/
+    pastefy:
+      loadBalancer:
+        servers:
+        - url: http://pastefy:None/
+    offen:
+      loadBalancer:
+        servers:
+        - url: http://offen:None/
+    metabase:
+      loadBalancer:
+        servers:
+        - url: http://metabase:None/
+    serve:
+      loadBalancer:
+        servers:
+        - url: http://serve:None/
+    ldap-user-manager:
+      loadBalancer:
+        servers:
+        - url: http://ldap-user-manager:None/
+    code-server:
+      loadBalancer:
+        servers:
+        - url: http://code-server:None/
+  routers:
+    homepage-dynamic:
+      rule: Host(`homepage.lostack.internal`)
+      entryPoints:
+      - https
+      service: homepage
+      middlewares:
+      - homepage-autostart
+    pastefy-dynamic:
+      rule: Host(`pastefy.lostack.internal`)
+      entryPoints:
+      - https
+      service: pastefy
+      middlewares:
+      - pastefy-autostart
+    offen-dynamic:
+      rule: Host(`offen.lostack.internal`)
+      entryPoints:
+      - https
+      service: offen
+      middlewares:
+      - offen-autostart
+    metabase-dynamic:
+      rule: Host(`metabase.lostack.internal`)
+      entryPoints:
+      - https
+      service: metabase
+      middlewares:
+      - metabase-autostart
+    serve-dynamic:
+      rule: Host(`serve.lostack.internal`)
+      entryPoints:
+      - https
+      service: serve
+      middlewares:
+      - serve-autostart
+    ldap-user-manager-dynamic:
+      rule: Host(`ldap-user-manager.lostack.internal`)
+      entryPoints:
+      - https
+      service: ldap-user-manager
+      middlewares:
+      - ldap-user-manager-autostart
+    code-server-dynamic:
+      rule: Host(`code-server.lostack.internal`)
+      entryPoints:
+      - https
+      service: code-server
+      middlewares:
+      - code-server-autostart
