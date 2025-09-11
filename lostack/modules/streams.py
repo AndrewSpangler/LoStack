@@ -49,4 +49,4 @@ def stream_remove_package(package_db_id: int) -> Response:
     return StreamHandler.generic_stream(depot_package_remove, package_db_id)
 
 def stream_depot_update() -> Response:    
-    return get_docker_handler().repo_manager.stream_update_repo()
+    return get_docker_handler().depot_handler.stream_update_repo()

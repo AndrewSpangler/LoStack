@@ -97,7 +97,7 @@ sudo bash ./setup-ubuntu.sh
 sudo chmod 666 .env
 
 # Clone Sablier Traefik plugin repository
-cd plugins-local/src/github.com/ && sudo mkdir sablierapp && cd sablierapp
+cd traefik-plugins/src/github.com/ && sudo mkdir sablierapp && cd sablierapp
 git clone https://github.com/SablierApp/sablier
 ```
 

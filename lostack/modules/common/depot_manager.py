@@ -1,5 +1,6 @@
 import logging
 import os
+import queue
 from collections import defaultdict
 from pathlib import Path
 from watchdog.observers import Observer
@@ -34,12 +35,11 @@ class DepotManager(FileSystemEventHandler):
 
     def _update_repo(self, result_queue=None) -> [None]:
         """Clone / pull depo git repo on background thread, pipes output to logs/stdout"""
+        if result_queue is None:
+            result_queue = queue.Queue()
         if self.dev_mode:
             return
-        def gen(result_queue):
-            return self.repo_manager.ensure_repo(result_queue)
-        self.logger.info("Updating depot repo")
-        for message in stream_generator(gen)(): yield print(message)
+        return self.repo_manager.ensure_repo(result_queue)
 
     def stream_update_repo(self) -> "Reponse":
         """Get flask response object to stream depot update to websocket"""

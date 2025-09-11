@@ -73,26 +73,6 @@ services:
       - "homepage.icon=coredns"
       - "homepage.description=Local Name Service"
 
-  dozzle:
-    extends:
-      file: compose/dozzle/docker-compose.yml
-      service: dozzle
-    volumes:
-      - ${DOCKER_SOCKET}:/var/run/docker.sock
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAINNAME}`)"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
-      - "homepage.name=Dozzle"
-      - "homepage.group=Admin"
-      - "homepage.icon=dozzle"
-      - "homepage.description=Container Logs"
-      - "homepage.href=https://dozzle.${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=dozzle"
-      - "lostack.duration=15m"
-      - "lostack.primary=true"
-
   filebrowser:
     extends:
       file: compose/filebrowser/docker-compose.yml
@@ -231,8 +211,6 @@ services:
     build:
       context: lostack
       target: builder
-    environment:
-      DEPOT_DEV_MODE: True
     restart: unless-stopped
     volumes:
       - ${DOCKER_SOCKET}:/var/run/docker.sock
