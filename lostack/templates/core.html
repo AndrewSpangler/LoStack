@@ -5,25 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LoStack Admin{% endblock %}</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css' ) }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/bootstrap-icons.min.css' ) }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/main.css' ) }}" rel="stylesheet">
-    
+    <link href="{{ url_for('static', filename='css/bootstrap-5.1.3/bootstrap.min.css' ) }}" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='css/bootstrap-icons/1.13.1/font/bootstrap-icons.min.css' ) }}" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='css/codemirror/5.65.16/lib/codemirror.min.css' ) }}" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='css/codemirror/5.65.16/addon/lint/lint.min.css' ) }}" rel="stylesheet" type="text/css">
+
+    {% if override_theme %}
+        {% if not override_theme == "default" %}
+            <link href="{{ url_for('static', filename='css/bootswatch/'+override_theme+'/bootstrap.min.css' ) }}" rel="stylesheet" type="text/css">
+        {% endif %}
+    {% elif selected_theme and not selected_theme == "default" %}
+        <link href="{{ url_for('static', filename='css/bootswatch/'+selected_theme+'/bootstrap.min.css' ) }}" rel="stylesheet" type="text/css">
+    {% endif %}
+
+    {% if selected_editor_theme and not selected_editor_theme == "default" %}
+        <link href="{{ url_for('static', filename='css/codemirror/5.65.16/theme/'+selected_editor_theme+'.min.css' ) }}" rel="stylesheet" type="text/css">
+    {% endif %}
+
+    <link href="{{ url_for('static', filename='css/main.css' ) }}" rel="stylesheet" type="text/css">
+
     {% block head %}{% endblock %}
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid bg-transparent">
+        <div class="row bg-transparent">
             <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar px-0">
+            <div class="col-md-3 col-lg-2 sidebar bg-dark px-0">
                 <div class="p-3">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="text-white mb-0">
+                        <h5 class="text-light mb-0">
                             <i class="bi bi-gear-fill me-2"></i>
-                            LoStack Admin
+                            LoStack
                         </h5>
-                        <button class="btn btn-link text-white p-0 sidebar-toggle d-md-none" 
+                        <button class="btn btn-link text-light p-0 sidebar-toggle d-md-none" 
                                 type="button" 
                                 data-bs-toggle="collapse" 
                                 data-bs-target="#sidebarNav" 
@@ -35,36 +49,47 @@
                     
                     <div class="collapse d-md-block sidebar-collapse" id="sidebarNav">
                         <nav class="nav flex-column">
-                            <a class="nav-link {% if request.endpoint == 'services' %}active{% endif %}" 
+                            <a class="nav-link text-light {% if request.endpoint == 'services' %}active{% endif %} text-decoration-none" 
                                href="{{ url_for('services') }}">
                                 <i class="bi bi-rocket-takeoff me-2"></i>
                                 Services
                             </a>
 
-                            <a class="nav-link {% if request.endpoint == 'depot' %}active{% endif %}" 
+                            <a class="nav-link text-light {% if request.endpoint == 'depot' %}active{% endif %} text-decoration-none" 
                                href="{{ url_for('depot') }}">
                                 <i class="bi bi-shop-window me-2"></i>
                                 Depot
                             </a>
 
-                            <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}" 
+                            <a class="nav-link text-light {% if request.endpoint == 'containers' %}active{% endif %} text-decoration-none" 
+                               href="{{ url_for('containers') }}">
+                                <i class="bi bi-boxes me-2"></i>
+                                Containers
+                            </a>
+
+                            <a class="nav-link text-light {% if request.endpoint and request.endpoint.startswith('file_browser.') %}active{% endif %} text-decoration-none" 
+                            href="{{ url_for('file_browser.file_browser') }}">
+                                <i class="bi bi-folder2-open me-2"></i>
+                                Files
+                            </a>
+
+                            <a class="nav-link text-light {% if request.endpoint == 'settings' %}active{% endif %} text-decoration-none" 
                                href="{{ url_for('settings') }}">
                                 <i class="bi bi-sliders me-2"></i>
+                                Config
+                            </a>
+
+                            <a class="nav-link text-light {% if request.endpoint == 'user_settings' %}active{% endif %} text-decoration-none" 
+                               href="{{ url_for('user_settings') }}">
+                                <i class="bi bi-person-gear me-2"></i>
                                 Settings
                             </a>
                                                     
-                            <hr class="text-white-50">
+                            <hr class="text-light">
 
-                            <a class="nav-link {% if request.endpoint == 'templater' %}active{% endif %}" 
-                               href="{{ url_for('templater') }}">
-                                <i class="bi bi-pencil me-2"></i>
-                                Template
-                            </a>
-
-                            <hr class="text-white-50">
                         </nav>
                         
-                        <div class="mt-auto text-white-50 small">
+                        <div class="mt-auto text-light small">
                             <div>
                                 <i class="bi bi-person-circle me-1"></i>
                                 {{ g.user if g.user else 'Unknown' }}
@@ -83,23 +108,27 @@
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10 main-content">
                 <!-- Top Navigation -->
-                <nav class="navbar shadow-sm navbar-light bg-white border-bottom px-3 py-2 my-2">
+                {% if not page_title_disabled %}
+                <nav class="navbar shadow-sm bg-dark px-3 py-2 my-2 mb-4">
                     <div class="d-flex align-items-center">
-                        <button class="btn btn-link text-dark p-0 me-3 sidebar-toggle d-md-none" 
+                        <button class="btn btn-link text-light p-0 me-3 sidebar-toggle d-md-none" 
                                 type="button">
                         </button>
-                        <span class="navbar-brand mb-0 h1">
-                            {% block page_title %}LoStack Admin{% endblock %}
+                        
+                        <span class="navbar-brand mb-0 h1 text-light">
+                            {% block page_title %}LoStack{% endblock %}
                         </span>
+                        
                     </div>
                     
                     <div class="d-flex align-items-center">
                         {% block nav_actions %}{% endblock %}
                     </div>
                 </nav>
+                {% endif %}
                 
                 <!-- Content Area -->
-                <div class="p-4">
+                <div class="p-4 py-0 px-0">
                     <!-- Flash Messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
@@ -181,295 +210,18 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js' ) }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
-
-    <script>
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert-dismissible');
-            alerts.forEach(alert => {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            });
-        }, 5000);
-        
-        // AJAX service toggle functionality
-        function toggleService(serviceId) {
-            fetch(`/services/${serviceId}/toggle`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload(); // Simple reload for now
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Network error occurred');
-            });
-        }
-        
-        // Terminal Modal Class
-        class TerminalModal {
-            constructor() {
-                this.modal = null;
-                this.log = null;
-                this.ansi_up = new AnsiUp();
-                this.es = null;
-                this.autoscroll = true;
-                this.wrapLines = false;
-                this.isPaused = false;
-                this.messageBuffer = [];
-                this.streamEnded = false;
-                this.streamEndTimeout = null;
-                this.reloadOnClose = false;
-            }
-
-            launch(streamUrl) {
-                this.modal = new bootstrap.Modal(document.getElementById('terminalModal'), {
-                    backdrop: 'static',
-                    keyboard: false
-                });
-                
-                this.log = document.getElementById('modalLog');
-                this.setupEventListeners();
-                this.initializeEventSource(streamUrl);
-                
-                // Show the modal
-                this.modal.show();
-                
-                // Clear any previous content
-                this.log.innerHTML = '';
-                this.streamEnded = false;
-                this.reloadOnClose = false;
-                
-                // Update status
-                document.getElementById('streamStatus').textContent = 'Connecting...';
-                document.getElementById('streamStatus').className = 'badge bg-warning';
-                document.getElementById('doneButton').disabled = true;
-            }
-
-            initializeEventSource(streamUrl) {
-                this.es = new EventSource(streamUrl);
-                
-                this.es.onopen = () => {
-                    document.getElementById('streamStatus').textContent = 'Connected';
-                    document.getElementById('streamStatus').className = 'badge bg-success';
-                };
-                
-                this.es.onmessage = (e) => {
-                    if (this.isPaused) {
-                        this.messageBuffer.push(e.data);
-                        return;
-                    }
-                    this.appendMessage(e.data);
-                };
-                
-                this.es.onerror = (err) => {
-                    console.log("EventSource closed:", err);
-                    this.handleStreamEnd();
-                };
-            }
-
-            handleStreamEnd() {
-                if (this.streamEnded) return;
-                
-                this.streamEnded = true;
-                this.appendMessage('\x1b[32m\nStream completed\x1b[0m');
-                
-                // Update status
-                document.getElementById('streamStatus').textContent = 'Completed';
-                document.getElementById('streamStatus').className = 'badge bg-success';
-                document.getElementById('doneButton').disabled = false;
-                
-                // Close event source
-                if (this.es) {
-                    this.es.close();
-                    this.es = null;
-                }
-                
-                // Set reload flag and start 10-second timer
-                this.reloadOnClose = true;
-                this.streamEndTimeout = setTimeout(() => {
-                    this.closeAndReload();
-                }, 10000);
-            }
-
-            appendMessage(data) {
-                const html = this.ansi_up.ansi_to_html(data);
-                const messageElement = document.createElement('div');
-                messageElement.innerHTML = html;
-                this.log.appendChild(messageElement);
-                
-                if (this.autoscroll) {
-                    this.scrollToBottom();
-                }
-            }
-
-            scrollToBottom() {
-                this.log.scrollTop = this.log.scrollHeight;
-            }
-
-            setupEventListeners() {
-                // Auto-scroll toggle
-                const autoscrollToggle = document.getElementById('modalAutoscrollToggle');
-                autoscrollToggle.addEventListener('change', () => {
-                    this.autoscroll = autoscrollToggle.checked;
-                    if (this.autoscroll) {
-                        this.scrollToBottom();
-                    }
-                });
-
-                // Line wrapping toggle
-                const wrapLinesToggle = document.getElementById('modalWrapLinesToggle');
-                wrapLinesToggle.addEventListener('change', () => {
-                    this.wrapLines = wrapLinesToggle.checked;
-                    this.updateLineWrapping();
-                });
-
-                // Copy button
-                document.getElementById('modalCopyButton').addEventListener('click', () => {
-                    this.copyToClipboard();
-                });
-
-                // Pause/Resume button
-                document.getElementById('modalPauseButton').addEventListener('click', () => {
-                    this.togglePause();
-                });
-
-                // Done button
-                document.getElementById('doneButton').addEventListener('click', () => {
-                    this.closeAndReload();
-                });
-
-                // Auto-scroll detection
-                this.log.addEventListener('scroll', () => {
-                    const isAtBottom = this.log.scrollTop + this.log.clientHeight >= this.log.scrollHeight - 5;
-                    if (isAtBottom !== this.autoscroll) {
-                        this.autoscroll = isAtBottom;
-                        autoscrollToggle.checked = isAtBottom;
-                    }
-                });
-
-                // Modal hidden event
-                document.getElementById('terminalModal').addEventListener('hidden.bs.modal', () => {
-                    this.cleanup();
-                    if (this.reloadOnClose) {
-                        location.reload();
-                    }
-                });
-            }
-
-            updateLineWrapping() {
-                if (this.wrapLines) {
-                    this.log.style.whiteSpace = 'pre-wrap';
-                    this.log.style.overflowX = 'hidden';
-                } else {
-                    this.log.style.whiteSpace = 'pre';
-                    this.log.style.overflowX = 'auto';
-                }
-            }
-
-            async copyToClipboard() {
-                try {
-                    const text = this.log.textContent || this.log.innerText;
-                    await navigator.clipboard.writeText(text);
-                    this.showToast('modalCopyToast');
-                } catch (err) {
-                    console.error('Failed to copy: ', err);
-                }
-            }
-
-            togglePause() {
-                this.isPaused = !this.isPaused;
-                const pauseButton = document.getElementById('modalPauseButton');
-                
-                if (this.isPaused) {
-                    pauseButton.textContent = 'Resume';
-                    pauseButton.classList.remove('btn-outline-warning');
-                    pauseButton.classList.add('btn-outline-success');
-                    document.getElementById('modalPauseToastText').textContent = 'Stream paused';
-                } else {
-                    pauseButton.textContent = 'Pause';
-                    pauseButton.classList.remove('btn-outline-success');
-                    pauseButton.classList.add('btn-outline-warning');
-                    document.getElementById('modalPauseToastText').textContent = 'Stream resumed';
-                    
-                    // Process buffered messages
-                    while (this.messageBuffer.length > 0) {
-                        this.appendMessage(this.messageBuffer.shift());
-                    }
-                }
-                
-                this.showToast('modalPauseToast');
-            }
-
-            showToast(toastId) {
-                const toastElement = document.getElementById(toastId);
-                const toast = new bootstrap.Toast(toastElement, {
-                    delay: 2000
-                });
-                toast.show();
-            }
-
-            closeAndReload() {
-                if (this.streamEndTimeout) {
-                    clearTimeout(this.streamEndTimeout);
-                    this.streamEndTimeout = null;
-                }
-                this.reloadOnClose = true;
-                this.modal.hide();
-            }
-
-            cleanup() {
-                if (this.es) {
-                    this.es.close();
-                    this.es = null;
-                }
-                if (this.streamEndTimeout) {
-                    clearTimeout(this.streamEndTimeout);
-                    this.streamEndTimeout = null;
-                }
-                this.messageBuffer = [];
-            }
-        }
-
-        // Global terminal modal instance
-        const terminalModal = new TerminalModal();
-
-        // Global function to launch the terminal modal
-        function launchTerminalModal(streamUrl) {
-            terminalModal.launch(streamUrl);
-        }
-        
-        // Initialize bulk actions on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const serviceCheckboxes = document.querySelectorAll('input[name="service_select"]');
-            
-            // Auto-collapse sidebar on mobile after navigation
-            const navLinks = document.querySelectorAll('.sidebar .nav-link');
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth < 768) {
-                        const sidebarCollapse = document.getElementById('sidebarNav');
-                        const bsCollapse = new bootstrap.Collapse(sidebarCollapse, {
-                            toggle: false
-                        });
-                        bsCollapse.hide();
-                    }
-                });
-            });
-        });
-    </script>
-    
+    <script src="{{ url_for('static', filename='js/ansi_up/5.1.0/ansi_up.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-5.1.3/bootstrap.bundle.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/lib/codemirror.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/mode/yaml/yaml.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/addon/lint/lint.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/addon/mode/overlay.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/mode/meta.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/addon/edit/closebrackets.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/addon/edit/matchbrackets.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/codemirror/5.65.16/addon/selection/active-line.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/js-yaml-4.1.0/js-yaml.min.js' ) }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js' ) }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

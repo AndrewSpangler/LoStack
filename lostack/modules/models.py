@@ -5,6 +5,7 @@ from flask_login import UserMixin
 from random import choice as rand_choice
 from string import ascii_lowercase
 from flask import current_app as app
+from werkzeug.datastructures import ImmutableDict
 
 db = app.db
 
@@ -27,6 +28,8 @@ class User(UserMixin, db.Model):
     permission_integer = db.Column(db.Integer, default=PERMISSION_ENUM.USER)
     name = db.Column(db.String(100), unique=True, nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    theme = db.Column(db.String(100), nullable=False, default="default")
+    editor_theme = db.Column(db.String(100), nullable=False, default="default")
     
     @property
     def is_admin(self) -> bool:
@@ -41,9 +44,9 @@ class SecretKey(db.Model):
     key = db.Column(db.String(24), nullable=False)
 
 
-class SablierDefaults(db.Model):
-    """Default configuration for Sablier services"""
-    __tablename__ = "SablierDefaults"
+class LoStackDefaults(db.Model):
+    """Default configuration for LoStack package entry"""
+    __tablename__ = "LoStackDefaults"
     __bind_key__ = "lostack-db"
     
     id = db.Column(db.Integer, primary_key=True)
@@ -65,14 +68,14 @@ class SablierDefaults(db.Model):
         return defaults
 
 
-class SablierService(db.Model):
-    """Individual Sablier service configuration"""
-    __tablename__ = "SablierService"
+class PackageEntry(db.Model):
+    """Individual Package configuration"""
+    __tablename__ = "PackageEntry"
     __bind_key__ = "lostack-db"
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    names = db.Column(db.String(400), nullable=False, default="80")
+    service_names = db.Column(db.String(400), nullable=False, default="80")
     display_name = db.Column(db.String(200), nullable=True)
     port = db.Column(db.String(10), nullable=False, default="80")
     session_duration = db.Column(db.String(10), nullable=False, default=app.config["SABLIER_DEFAULT_SESSION_DURATION"])
@@ -81,6 +84,7 @@ class SablierService(db.Model):
     show_details = db.Column(db.Boolean, nullable=False, default=app.config["SABLIER_REFRESH_FREQUENCY"])
     enabled = db.Column(db.Boolean, default=True)
     automatic = db.Column(db.Boolean, default=False)
+    core_service = db.Column(db.Boolean, default=False)
 
     @property
     def display_name_or_name(self) -> str:
@@ -90,15 +94,16 @@ class SablierService(db.Model):
     @property
     def docker_services(self) -> list[str]:
         """Return display_name if set, otherwise use name"""
-        return [n.strip() for n in self.names.split(",") if n.strip()]
+        return [n.strip() for n in self.service_names.split(",") if n.strip()]
+
 
 def export_sablier_config_to_yaml() -> str:
     """
     Export all enabled Sablier services to Traefik dynamic YAML format
     Returns the YAML string
     """
-    defaults = SablierDefaults.get_defaults()
-    services = SablierService.query.filter_by(enabled=True).all()
+    defaults = LoStackDefaults.get_defaults()
+    services = PackageEntry.query.filter_by(enabled=True).all()
     
     config = {
         "http": {
@@ -110,10 +115,8 @@ def export_sablier_config_to_yaml() -> str:
     
     for service in services:
         service_name = service.name
-        names = [s.strip() for s in service.names.split(",")]
-        names = [s.strip() for s in [service_name, *names]]
-        names = [s for s in names if s]
-        names = [s for s in set(names)]
+        names = [s.strip() for s in [service_name, *service.service_names.split(",")]]
+        names = [s for s in set(names) if s]
         names = ",".join(names).strip(",")
         # Create middleware
         middleware_name = f"{service_name}-autostart"
@@ -133,7 +136,7 @@ def export_sablier_config_to_yaml() -> str:
             }
         }
         
-        # Create service
+        # Create Traefik service
         config["http"]["services"][service_name] = {
             "loadBalancer": {
                 "servers": [
@@ -142,7 +145,7 @@ def export_sablier_config_to_yaml() -> str:
             }
         }
         
-        # Create router
+        # Create Traefik router
         router_name = f"{service_name}-dynamic"
         config["http"]["routers"][router_name] = {
             "rule": f"Host(`{service_name}.{defaults.domain}`)",
@@ -152,7 +155,6 @@ def export_sablier_config_to_yaml() -> str:
         }
     
     return yaml.dump(config, default_flow_style=False, sort_keys=False)
-
 
 def save_sablier_config_to_file(filename="/dynamic.yml") -> bool:
     """
@@ -168,27 +170,9 @@ def save_sablier_config_to_file(filename="/dynamic.yml") -> bool:
         print(f"Error saving config to {filename}: {e}")
         return False
 
-
-def create_service(name, port="8080", display_name=None) -> SablierService:
-    """Create a new Sablier service using current defaults"""
-    defaults = SablierDefaults.get_defaults()
-    service = SablierService(
-        name=name,
-        port=port,
-        display_name=display_name,
-        session_duration=defaults.session_duration,
-        theme=defaults.theme,
-        refresh_frequency=defaults.refresh_frequency,
-        show_details=defaults.show_details
-    )
-    db.session.add(service)
-    db.session.commit()
-    return service
-
-
-def update_defaults(**kwargs) -> SablierDefaults:
+def update_defaults(**kwargs) -> LoStackDefaults:
     """Update default configuration"""
-    defaults = SablierDefaults.get_defaults()
+    defaults = LoStackDefaults.get_defaults()
     for key, value in kwargs.items():
         if hasattr(defaults, key):
             setattr(defaults, key, value)
@@ -196,17 +180,16 @@ def update_defaults(**kwargs) -> SablierDefaults:
     db.session.commit()
     return defaults
 
-
 def get_permission_from_groups(groups:list[str]) -> int:
     """Assigns the highest permission level from group memberships"""
     return max([PERMISSION_ENUM._LOOKUP.get(grp.strip(), 0) for grp in groups], default=0)
 
-
 def user_loader(user_id:int|str) -> User:
+    """User Loader for Flask-Login"""
     return User.query.get(int(user_id))
 
-
 def init_db(app) -> None:
+    """Create tables and init data."""
     with app.app_context():
         logging.info("Initializing db...")
         db.create_all(bind_key="lostack-db")
@@ -236,3 +219,11 @@ def init_db(app) -> None:
             db.session.add(user)
             db.session.commit()
         db.session.commit()
+        app.models = ImmutableDict()
+        for obj in (
+            SecretKey,
+            LoStackDefaults,
+            PackageEntry,
+            PERMISSION_ENUM
+        ):
+            setattr(app.models, obj.__name__, obj)

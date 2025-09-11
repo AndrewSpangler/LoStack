@@ -1,4 +1,4 @@
-# LoStack - Local Containerized Service Stack for MacOS
+# LoStack - Easy Containerized Service Stack
 
 ![LoStack Dashboard](docs/images/dashboard.png?raw=true "LoStack Dashboard")
 

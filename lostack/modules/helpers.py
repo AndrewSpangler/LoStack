@@ -12,7 +12,6 @@ from flask_login import current_user
 from fnmatch import fnmatch
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
-from typing import List
 
 
 def get_system_info() -> dict:
@@ -23,7 +22,6 @@ def get_system_info() -> dict:
         "Python Version": sys.version,
         "Flask Version": flask_version,
     }
-
 
 def get_proxy_user_meta(current_user) -> dict:
     """Read proxy-auth metadata from headers"""
@@ -41,7 +39,13 @@ def get_proxy_user_meta(current_user) -> dict:
     }
     return meta
 
-def load_yaml(file:os.PathLike, required_sections:List[str]=[], encoding='utf-8',) -> dict:
+def write_compose(compose_file_path: os.PathLike, compose_data: dict) -> None:
+    yaml_content = yaml.dump(compose_data, default_flow_style=False, sort_keys=False)
+    with open(compose_file_path, 'w') as f:
+        f.write(yaml_content)
+    return
+
+def load_yaml(file:os.PathLike, required_sections:list[str]=[], encoding='utf-8',) -> dict:
     """Loads a YAML file into a Python dict"""
     if not os.path.exists(file):
         raise FileNotFoundError(f"YAML file doesn't exist - {file}")

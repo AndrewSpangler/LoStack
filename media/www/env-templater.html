@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta license="wtfpl">
+  <title>Lyfe's .env Editor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      min-height: 100vh;
+      padding: 20px;
+      color: #e0e0e0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #1e1e1e;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1f2933 0%, #2c3e50 100%);
+      color: #f1f1f1;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 { font-size: 2.5em; font-weight: 300; margin-bottom: 10px; }
+    .header p { opacity: 0.8; font-size: 1.1em; }
+
+    .main-content { padding: 40px; }
+
+    .section { margin-bottom: 40px; }
+
+    .section-title {
+      font-size: 1.5em;
+      color: #f1f1f1;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 30px;
+      background: #444;
+      border-radius: 2px;
+    }
+
+    .file-controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .control-group {
+      background: #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid #333;
+      transition: all 0.3s ease;
+    }
+
+    .control-group h3 {
+      color: #f1f1f1;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    .file-input-wrapper { position: relative; display: inline-block; width: 100%; }
+    .file-input { position: absolute; left: -9999px; }
+
+    .file-input-label {
+      display: block;
+      padding: 12px 20px;
+      background: #4a90e2;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .file-input-label:hover { opacity: 0.9; }
+
+    .env-fields { display: grid; gap: 20px; }
+
+    .field-group {
+      background: #2a2a2a;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 25px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .field-label {
+      font-weight: 600;
+      color: #f1f1f1;
+      font-size: 1.1em;
+      font-family: 'Courier New', monospace;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 15px;
+      background: #1c1c1c;
+      border: 2px solid #333;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #e0e0e0;
+      transition: all 0.3s ease;
+      font-family: 'Courier New', monospace;
+    }
+
+    .field-input:focus {
+      outline: none;
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 3px rgba(74,144,226,0.2);
+    }
+
+    .help-text {
+      margin-top: 8px;
+      color: #aaaaaa;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid #333;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary { background: #337766; color: white; }
+    .btn-secondary { background: #444; color: white; }
+
+    .btn:hover { opacity: 0.9; }
+
+    .message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .message.success { background: #234d36; color: #c8e6c9; border: 1px solid #2e7d32; }
+    .message.error { background: #4d1f1f; color: #ffcdd2; border: 1px solid #b71c1c; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaaaaa;
+    }
+    .empty-state h3 { font-size: 1.5em; margin-bottom: 10px; color: #f1f1f1; }
+
+    @media (max-width: 768px) {
+      .actions { flex-direction: column; align-items: center; }
+      .btn { width: 100%; justify-content: center; max-width: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>.env Editor</h1>
+      <p>Upload, edit, and manage your environment variables with ease</p>
+    </div>
+
+    <div class="main-content">
+      <div class="section">
+        <div class="control-group">
+          <h3>Upload .env File</h3>
+          <div class="file-input-wrapper">
+            <input type="file" id="envFile" class="file-input" accept=".env,*"/>
+            <label for="envFile" class="file-input-label">Choose .env File</label>
+          </div>
+        </div>
+      </div>
+
+      <div id="messageArea"></div>
+
+      <div class="section">
+        <h2 class="section-title">Environment Variables</h2>
+        <div id="fieldsContainer"></div>
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+class EnvEditor {
+  constructor() {
+    this.envData = new Map();       // key → value
+    this.envKeys = [];              // preserve order of variables
+    this.rawLines = [];             // preserve original lines (including comments/blank)
+    this.defaultsData = new Map();
+    this.fieldDefinitions = new Map();
+
+    this.initializeEventListeners();
+    this.renderFields();
+  }
+
+  initializeEventListeners() {
+    document.getElementById("envFile").addEventListener("change", this.handleFileUpload.bind(this));
+    document.getElementById("saveBtn").addEventListener("click", this.saveEnvFile.bind(this));
+  }
+
+  showMessage(message, type = "success") {
+    const messageArea = document.getElementById("messageArea");
+    messageArea.innerHTML = `<div class="message ${type}">${message}</div>`;
+    setTimeout(() => { messageArea.innerHTML = ""; }, 5000);
+  }
+
+  handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        this.parseEnvContent(e.target.result);
+        this.showMessage(`Successfully loaded ${file.name}`, "success");
+        this.renderFields();
+      } catch (error) {
+        this.showMessage(`Error loading file: ${error.message}`, "error");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  parseEnvContent(content) {
+    this.envData.clear();
+    this.envKeys = [];
+    this.rawLines = content.split("\n"); // store original lines
+
+    this.rawLines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return; // comment/blank line
+      const equalIndex = trimmed.indexOf("=");
+      if (equalIndex === -1) return;
+
+      const key = trimmed.substring(0, equalIndex).trim();
+      let value = trimmed.substring(equalIndex + 1).trim();
+      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+
+      if (!this.envData.has(key)) {
+        this.envKeys.push(key);
+      }
+      this.envData.set(key, value);
+    });
+  }
+
+  getAllKeys() {
+    const keys = [...this.envKeys];
+    this.defaultsData.forEach((_, key) => {
+      if (!this.envData.has(key)) keys.push(key);
+    });
+    return keys;
+  }
+
+  renderFields() {
+    const container = document.getElementById("fieldsContainer");
+    const allKeys = this.getAllKeys();
+
+    if (allKeys.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h3>No variables loaded</h3>
+          <p>Upload a .env file to get started</p>
+        </div>`;
+      return;
+    }
+
+    // Single block container for all fields
+    let fieldsHTML = `<div class="fields-block">`;
+
+    fieldsHTML += allKeys.map(key => {
+      const currentValue = this.envData.get(key) || this.defaultsData.get(key) || "";
+      const definition = this.fieldDefinitions.get(key) || {};
+      const helpText = definition.help || "";
+
+      const safeKey = this.escapeHtml(key);
+      const safeValue = this.escapeAttribute(currentValue);
+      const safeHelp = this.escapeHtml(helpText);
+
+      return `
+        <div class="field-row">
+          <label class="field-label">${safeKey}</label>
+          <input type="text" class="field-input" data-key="${safeKey}" value="${safeValue}" placeholder="Enter value for ${safeKey}"/>
+          ${safeHelp ? `<div class="help-text">${safeHelp}</div>` : ""}
+        </div>`;
+    }).join("");
+
+    fieldsHTML += `</div>`;
+    container.innerHTML = fieldsHTML;
+
+    container.querySelectorAll(".field-input").forEach(input => {
+      input.addEventListener("input", (e) => {
+        const key = e.target.getAttribute("data-key");
+        const value = e.target.value;
+        this.envData.set(key, value);
+        if (!this.envKeys.includes(key)) {
+          this.envKeys.push(key);
+        }
+      });
+    });
+  }
+
+  escapeHtml(text) {
+    if (text == null) return "";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  escapeAttribute(text) {
+    return this.escapeHtml(text).replace(/`/g, "&#x60;");
+  }
+
+  generateEnvContent() {
+    // Rebuild using original lines
+    const result = this.rawLines.map(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return line; // preserve comment/blank
+
+      const equalIndex = trimmed.indexOf("=");
+      if (equalIndex === -1) return line; // weird line, leave as-is
+
+      const key = trimmed.substring(0, equalIndex).trim();
+      let value = this.envData.get(key) || "";
+
+      const needsQuotes = value.includes(" ") || value.includes("#") || value.includes("=") ||
+                          value.includes('"') || value.includes("'") || value.includes("\n");
+      if (needsQuotes) {
+        const escapedValue = value.replace(/"/g, '\\"');
+        return `${key}="${escapedValue}"`;
+      }
+      return `${key}=${value}`;
+    });
+
+    // Append any new keys not in rawLines
+    this.getAllKeys().forEach(key => {
+      if (!this.rawLines.some(line => line.trim().startsWith(key + "="))) {
+        const value = this.envData.get(key) || "";
+        result.push(`${key}=${value}`);
+      }
+    });
+
+    return result.join("\n");
+  }
+
+  saveEnvFile() {
+    const content = this.generateEnvContent();
+    if (!content.trim()) {
+      this.showMessage("No environment variables to save", "error");
+      return;
+    }
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = ".env";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showMessage("Environment file saved successfully!", "success");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => { new EnvEditor(); });
+</script>
+
+</body>
+</html>

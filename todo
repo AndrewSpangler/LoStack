@@ -1,3 +1,52 @@
-default env file in labels
-list of image names in service
-Updating homepage router time should update compose as well
+TODO BEFORE RELEASE:
+   Finish implementing editor themes
+   Finish implementing bootstrap themes
+   Handle SVG in file browser
+
+   Make dedicated email
+   Make dedicated repo
+   Implement package author tag
+   Implement container author tag
+   Make container management page
+   Implement network system (with prefixes)
+   Rename database tables
+   Separate sablier middleware and traefik routing 
+   Modal for selecting theme and editor theme
+
+DB/Routing:
+  - Traefik Route boolean
+  - Sablier Middleware boolean
+
+# different jupyter
+https://awesome-docker-compose.com/apps/ide-and-tools/jupyterlab
+
+
+https://hub.docker.com/r/zelon88/hrconvert2
+(Newer image)
+
+
+TODO:
+ - add codemirror css / js to static folders
+ - option for "icon_proxy" mode where icons are pulled from CDNs with etagging
+ 
+Fields allowed in packages:
+   volumes
+   services
+   networks
+  
+
+
+
+Technologies used:
+  - Traefik
+  - Authelia
+  - OpenLDAP
+  - Sablier + Sablier Traefik Plugin
+  - CoreDNS
+  - Python
+  - Flask
+  - Bootstrap
+  - Bootstrap Icons (UI)
+  - Pictogrammers Material Design Icons (Store)
+  - ANSI Up (JS)
+  - CodeMirror

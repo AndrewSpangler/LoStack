@@ -1,25 +1,3 @@
-import atexit
-import os
-import sys
-import json
-import time
-import logging
-import logging.config
-import yaml
-from flask import Flask, abort, g, request
-from flask_login import LoginManager, current_user, login_user
-from flask_sqlalchemy import SQLAlchemy
-from functools import wraps
-
-from modules.git import RepoManager
-from modules.stream_generator import stream_generator
-from modules.helpers import (
-    get_system_info,
-    get_proxy_user_meta,
-    wait_for_db,
-    is_trusted_ip
-)
-
 print(disclaimer := """
 Disclaimer: This software is provided "as is" and without warranties of 
 any kind, whether express or implied, including, but not limited to, the 
@@ -35,14 +13,35 @@ environmental damage. By using this software, you acknowledge that you
 have read this disclaimer and agree to its terms and conditions.
 """.strip())
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+import atexit
+import os
+import sys
+import json
+import time
+import logging
+import logging.config
+import yaml
+from flask import Flask, abort, g, request
+from flask_login import LoginManager, current_user, login_user
+from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
+from modules.browser import init_filebrowser
+from modules.helpers import (
+    get_system_info,
+    get_proxy_user_meta,
+    wait_for_db,
+    is_trusted_ip
+)
+from modules.themes import BOOTSWATCH_THEMES, CODEMIRROR_THEMES
 
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 ENV_DEFAULTS = {
     "APPLICATION_NAME" : "LoStack Admin",
     "APPLICATION_DESCRIPTION" : "Welcome to LoStack Station",
     "APPLICATION_DETAILS" : "Easily configure Traefik, GetHomePage, and Sablier and install prebuild services with a few clicks.",
     "DEPOT_URL" : "https://github.com/AndrewSpangler/LoStack-Depot.git",
+    "DEPOT_BRANCH" : "main",
     "DEPOT_DIR" : "/appdata/LoStack-Depot",
     "DEPOT_DIR_DEV" : "/docker/LoStack-Depot",
     "DEPOT_DEV_MODE": False,
@@ -92,7 +91,6 @@ for k, v in ENV_DEFAULTS.items():
 
 if app.config.get("DEPOT_DEV_MODE"):
     app.config["DEPOT_DIR"] = app.config.get("DEPOT_DIR_DEV")
-    
 
 logging.basicConfig(level=logging.DEBUG)
 logging.config.dictConfig(app.config["LOG_CONFIG"])
@@ -104,7 +102,8 @@ db_host = app.config.get("DB_HOST")
 db_port = app.config.get("DB_PORT")
 db_user = app.config.get("DB_USER")
 db_pass = app.config.get("DB_PASSWORD")
-# Wait for an connect to db
+
+# Wait for then connect to db
 redacted_connection_string = f"mysql+pymysql://{db_user}:****@{db_host}:{db_port}/{db_name}"
 logging.info("DB Config: " + redacted_connection_string)
 connection_string = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
@@ -112,16 +111,13 @@ app.config["SQLALCHEMY_BINDS"] = {"lostack-db" : connection_string}
 wait_for_db(app.config["SQLALCHEMY_BINDS"]["lostack-db"])
 app.db = db = SQLAlchemy(app)
 
+# Set up db
 with app.app_context():
     # DB Tables and Functions
     from modules.models import (
         User,
-        SablierDefaults, 
-        SablierService,
         get_permission_from_groups,
         user_loader,
-        create_service,
-        update_defaults,
         init_db
     )
     init_db(app)
@@ -138,7 +134,11 @@ def load_user(user_id):
 
 
 def permission_required(required_permission):
-    """SSO / Authelia Integration"""
+    """
+    SSO / Authelia Integration
+    This decorator function is used to limit access to Flask endpoints 
+    based on users' groups as supplied by the reverse-proxy
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -160,7 +160,7 @@ def permission_required(required_permission):
             group_list = [grp.strip() for grp in groups.split(",") if grp.strip()]
             permission = get_permission_from_groups(group_list)
 
-            # Get or create user (single query)
+            # Get or create user 
             user = User.query.filter_by(name=username).first()
             
             if user is None:
@@ -195,9 +195,34 @@ def permission_required(required_permission):
             
         return wrapper
     return decorator
+
 app.permission_required = permission_required
 
-from modules.autodiscover import init_docker_handler
+
+@app.context_processor
+def provide_selection() -> dict:
+    """
+    Context processor which runs before any template is rendered
+    Provides access to these values in all templates
+    """
+    selected_theme = "default"
+    if hasattr(current_user, 'theme'):
+        selected_theme = current_user.theme or "default"
+    
+    selected_editor_theme = "default"
+    if hasattr(current_user, 'editor_theme'):
+        selected_editor_theme = current_user.editor_theme or "default"
+
+    return {
+        "themes": BOOTSWATCH_THEMES,
+        "editor_themes": CODEMIRROR_THEMES,
+        "selected_theme": selected_theme,
+        "selected_editor_theme" : selected_editor_theme,
+    }
+
+init_filebrowser(app)
+
+from modules.package_manager import init_docker_handler
 
 # Initialize Docker event handler
 docker_handler = None
@@ -208,26 +233,7 @@ logging.info("Docker event handler initialized")
 with app.app_context():
     import modules.routes
 
-# Cleanup function for graceful shutdown
-def cleanup():
-    """Cleanup function to stop Docker handler on shutdown"""
-    if docker_handler:
-        docker_handler.stop()
-
-atexit.register(cleanup)
-
-def update_store():
-    def _update_store(result_queue):
-        return RepoManager(
-            "/appdata/LoStack-Depot",
-            repo_url=DEPOT_URL,
-            branch="main",
-            result_queue=result_queue
-        ).ensure_repo()
-    print("UPDATING STORE")
-    for message in stream_generator(_update_store, [])(): yield message
+atexit.register(docker_handler.stop)
 
 if __name__ == "__main__":
-    if not app.config.get("DEPOT_DEV_MODE").lower() == "true":
-        update_store()
     app.run(host="0.0.0.0", port=80, threaded=True)

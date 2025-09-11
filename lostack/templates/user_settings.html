@@ -1,0 +1,83 @@
+{% extends "core.html" %}
+
+{% block title %}User Settings - LoStack Admin{% endblock %}
+{% block page_title %}User Settings{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-person-gear me-2"></i>
+                    <h5 class="mb-0">User Settings</h5>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Configure LoStack interface.
+                    These settings only affect your account.
+                </p>
+                
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- UI Theme -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.theme.label(class="form-label fw-semibold") }}
+                                {{ form.theme(class="form-select" + (" is-invalid" if form.theme.errors else "")) }}
+                                {% if form.theme.description %}
+                                    <div class="form-text">{{ form.theme.description }}</div>
+                                {% endif %}
+                                {% for error in form.theme.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Editor Theme -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.editor_theme.label(class="form-label fw-semibold") }}
+                                {{ form.editor_theme(class="form-select" + (" is-invalid" if form.editor_theme.errors else "")) }}
+                                {% if form.editor_theme.description %}
+                                    <div class="form-text">{{ form.editor_theme.description }}</div>
+                                {% endif %}
+                                {% for error in form.editor_theme.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-around">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = form.querySelector('input[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.value = 'Saving...';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

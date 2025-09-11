@@ -6,3 +6,20 @@ services:
     restart: no
     environment: 
       domain: ${DOMAINNAME},*.${DOMAINNAME}
+    volumes:
+      - ${CERTS_DIR}:/root/.local/share/mkcert
+    command: >
+      sh -c '
+      if [ -f "/root/.local/share/mkcert/rootCA.pem" ]; then
+        echo "Root CA certificate already exists. Exiting...";
+        exit 0;
+      else
+        echo "Root CA certificate not found. Running mkcert...";
+        mkcert -install && for i in $$(echo $$domain | sed "s/,/ /g"); do mkcert $$i; done && tail -f -n0 /etc/hosts;
+      fi
+      '
+    labels:
+      - "homepage.name=MKCert"
+      - "homepage.group=Background Services"
+      - "homepage.icon=/images/lock.png"
+      - "homepage.description=Localhost cert management"

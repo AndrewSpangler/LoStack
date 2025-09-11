@@ -1,131 +1,92 @@
+{% from 'macros/summary_panel.html' import summary_panel %}
+{% from 'macros/search_bar.html' import search_bar %}
 {% extends "core.html" %}
 
 {% block title %}Depot - LoStack Admin{% endblock %}
 {% block page_title %}Service Depot{% endblock %}
 
-
 {% block nav_actions %}
 <div class="btn-group" role="group">
-    <button onclick="launchTerminalWithStream('{{ url_for('update_depot') }}')" 
-            class="btn btn-outline-primary">
+    <button onclick="launchTerminalWithButtonAnimation('{{ url_for('update_depot') }}')" 
+            class="btn btn-sm btn-outline-light">
         <i class="bi bi-update me-1"></i>
         Update Depot
     </button>
-
-    <a href="{{ url_for('services') }}" class="btn btn-outline-primary">
-        <i class="bi bi-list-ul me-1"></i>
-        View Services
-    </a>
-    <a href="{{ url_for('depot') }}" class="btn btn-outline-secondary">
+    <a href="{{ url_for('depot') }}" class="btn btn-sm btn-outline-light">
         <i class="bi bi-arrow-clockwise me-1"></i>
         Refresh
     </a>
 </div>
 {% endblock %}
 
-
-
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <!-- Depot Summary -->
-        <div class="row mb-4">
-            <div class="col-4">
-                <div class="card shadow-sm bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <h4 class="mb-0">{{ packages|length }}</h4>
-                                <p class="mb-0 small">Available</p>
-                            </div>
-                            <i class="bi bi-box display-6 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-4">
-                <div class="card shadow-sm bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <h4 class="mb-0">Accepting</h4>
-                                <p class="mb-0 small">Pull Requests!</p>
-                            </div>
-                            <i class="bi bi-git display-6 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-4">
-                <div class="card shadow-sm bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <h4 class="mb-0">Ready</h4>
-                                <p class="mb-0 small">To Deploy</p>
-                            </div>
-                            <i class="bi bi-rocket display-6 opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        {{ summary_panel([
+            {'value': total_count,'label': 'Available','icon': 'box','bg_class': 'bg-info'},
+            {'value': 'Accepting','label': 'Pull Requests!','icon': 'git','bg_class': 'bg-success'},
+            {'value': 'Ready','label': 'To Deploy','icon': 'rocket','bg_class': 'bg-primary'       }
+        ]) }}
 
         <!-- Search and Filter Section -->
         {% if packages %}
         <div class="card mb-4 shadow-sm">
             <div class="card-body">
                 <!-- Search Bar -->
-                <div class="mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" 
-                               id="serviceSearch" 
-                               class="form-control" 
-                               placeholder="Search services by name, description, or group..."
-                               autocomplete="off">
-                        <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
-                            <i class="bi bi-x-lg"></i>
+                {{ search_bar("Search packages by name, description, group, or tags...") }}
+                
+                <hr class="my-3">
+                
+                <!-- Group Filter Section -->
+                <div class="border-start border-primary border-3 ps-3 mb-3">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <small class="text-muted fw-medium me-2">Filter by group:</small>
+                        <button class="btn btn-outline-primary btn-sm group-tag active" 
+                                onclick="filterByGroup('all')" 
+                                data-group="all">
+                            <i class="bi bi-grid me-1"></i>All
                         </button>
+                        {% for group, count in groups.items() %}
+                        <button class="btn btn-outline-secondary text-muted btn-sm group-tag" 
+                                onclick="filterByGroup('{{ group }}')" 
+                                data-group="{{ group }}">
+                            {{ group }} <span class="badge bg-secondary ms-1">{{ count }}</span>
+                        </button>
+                        {% endfor %}
                     </div>
                 </div>
                 
-                <!-- Horizontal Rule -->
-                <hr class="my-3">
-                
-                <!-- Group Tags -->
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <small class="text-muted me-2">Filter by group:</small>
-                    <button class="btn btn-outline-primary btn-sm group-tag active" 
-                            onclick="filterByGroup('all')" 
-                            data-group="all">
-                        <i class="bi bi-grid me-1"></i>All
-                    </button>
-                    {% set groups = {} %}
-                    {% for package_name, package_data in packages.items() %}
-                        {% if package_data.labels %}
-                            {% for label in package_data.labels %}
-                                {% if label.startswith('homepage.group=') %}
-                                    {% set group = label.split('=', 1)[1] %}
-                                    {% if group not in groups %}
-                                        {% set _ = groups.update({group: 0}) %}
-                                    {% endif %}
-                                    {% set _ = groups.update({group: groups[group] + 1}) %}
-                                {% endif %}
+                <!-- Tags Filter Section -->
+                <div class="border-start border-primary border-3 ps-3">
+                    <div class="d-flex align-items-center justify-content-between cursor-pointer" 
+                         onclick="toggleTagsSection()" 
+                         id="tagsToggle">
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted fw-medium me-2">Filter by tags:</small>
+                            <i class="bi bi-chevron-down text-primary" id="tagsChevron"></i>
+                        </div>
+                        <small class="text-muted">
+                            <span id="tagsSummary">Click to expand tag filters</span>
+                        </small>
+                    </div>
+                    
+                    <div id="tagsContent" class="collapse">
+                        <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+                            <button class="btn btn-outline-success btn-sm tag-filter active" 
+                                    onclick="filterByTag('all')" 
+                                    data-tag="all">
+                                <i class="bi bi-tags me-1"></i>All
+                            </button>
+                            {% for tag, count in tags.items() %}
+                            <button class="btn btn-outline-secondary text-muted btn-sm tag-filter" 
+                                    onclick="filterByTag('{{ tag }}')" 
+                                    data-tag="{{ tag }}">
+                                {{ tag }} <span class="badge bg-secondary ms-1">{{ count }}</span>
+                            </button>
                             {% endfor %}
-                        {% endif %}
-                    {% endfor %}
-                    {% for group, count in groups.items() %}
-                    <button class="btn btn-outline-secondary btn-sm group-tag" 
-                            onclick="filterByGroup('{{ group }}')" 
-                            data-group="{{ group }}">
-                        {{ group }} <span class="badge bg-secondary ms-1">{{ count }}</span>
-                    </button>
-                    {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -134,113 +95,129 @@
         <!-- Package Grid -->
         {% if packages %}
         <div class="row" id="serviceGrid">
-            {% for package_name, package_data in packages.items() %}
+            {% for package_name, package in packages.items() %}
             <div class="col-lg-6 col-xl-4 mb-4 service-item" 
-                 data-name="{{ package_name|lower }}"
-                 data-title="{{ package_name|replace('-', ' ')|replace('_', ' ')|title|lower }}"
-                 data-description="{% for label in package_data.labels if label.startswith('homepage.description=') %}{{ label.split('=', 1)[1]|lower }}{% endfor %}"
-                 data-group="{% for label in package_data.labels if label.startswith('homepage.group=') %}{{ label.split('=', 1)[1] }}{% endfor %}">
+                 data-name="{{ package.search_data.name }}"
+                 data-title="{{ package.search_data.title }}"
+                 data-description="{{ package.search_data.description }}"
+                 data-group="{{ package.group or '' }}"
+                 data-tags="{{ package.search_data.tags }}">
                 <div class="card shadow depot-card service-card h-100">
                     <div class="card-header bg-primary text-white">
                         <div class="d-flex align-items-start justify-content-between">
-                            <div>
-                                <h6 class="mb-1 fw-bold">{{ package_name|replace('-', ' ')|replace('_', ' ')|title }}</h6>
-                                {% if package_data.labels %}
-                                    {% for label in package_data.labels %}
-                                        {% if label.startswith('homepage.description=') %}
-                                            <small class="opacity-75">{{ label.split('=', 1)[1] }}</small>
-                                        {% endif %}
-                                    {% endfor %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fw-bold d-inline">{{ package.title }}</h6>
+                                {% if package.description %}
+                                    <small class="opacity-75 d-block mt-1">{{ package.description }}</small>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     
                     <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <!-- Group Tag (Left) -->
+                            <div>
+                                {% if package.group %}
+                                    <span class="badge bg-info">{{ package.group }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Other Tags (Right) -->
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% for tag in package.tags %}
+                                    <span class="badge bg-secondary">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Service Details -->
+                        {% if package.details %}
+                            <div class="small text-muted my-3">
+                                {{ package.details }}
+                            </div>
+                        {% endif %}
+
+                        <hr>
+                        
                         <!-- Package Details -->
                         <div class="small text-muted mb-3">
                             <div class="row g-2">
                                 <div class="col-6">
                                     <strong>Primary Service:</strong><br>
-                                    <code class="text-primary">{{ package_name }}</code>
+                                    <code>{{ package.name }}</code>
                                 </div>
                                 <div class="col-6">
                                     <strong>Service Port:</strong><br>
-                                    {% if package_data.labels %}
-                                        {% for label in package_data.labels %}
-                                            {% if label.startswith('traefik.http.services.') and '.loadbalancer.server.port=' in label %}
-                                                <code>{{ label.split('=')[1] }}</code>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endif %}
-                                </div>
-                                {% if package_data.dependencies %}
-                                <div class="col-6">
-                                    <strong>Dependencies:</strong><br>
-                                    {{ package_data.dependencies|length }}
-                                </div>
-                                {% endif %}
-                                <div class="col-6">
-                                    <strong>Group:</strong><br>
-                                    {% if package_data.labels %}
-                                        {% for label in package_data.labels %}
-                                            {% if label.startswith('homepage.group=') %}
-                                                <span class="badge bg-info">{{ label.split('=', 1)[1] }}</span>
-                                            {% endif %}
-                                        {% endfor %}
+                                    {% if package.service_port %}
+                                        <code>{{ package.service_port }}</code>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Service URL Preview -->
-                        <div class="mb-3">
-                            <small class="text-muted d-block">Service URL</small>
-                            <code class="small text-break">
-                                https://{{ package_name }}.{{ request.host.split('.', 1)[1] if '.' in request.host else 'lostack.internal' }}/
+                       
+                        <small>
+                            <code class="text-break">
+                                https://{{ package.name }}.{{ request.host.split('.', 1)[1] if '.' in request.host else 'lostack.internal' }}/
                             </code>
-                        </div>
+                        </small>
+
+                        <hr>
                         
-                        <!-- Dependencies List -->
-                        {% if package_data.dependencies %}
                         <div class="mb-3">
-                            <small class="text-muted d-block mb-1">Dependencies:</small>
-                            <div class="d-flex flex-wrap gap-1">
-                                {% for dep_name in package_data.dependencies.keys() %}
-                                <span class="badge bg-secondary">{{ dep_name }}</span>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <!-- Volumes -->
-                        {% if package_data.volumes %}
-                        <div class="mb-3">
-                            <small class="text-muted d-block mb-1">Storage:</small>
                             <div class="small">
-                                <i class="bi bi-hdd me-1"></i>
-                                {{ package_data.volumes|length }} volume{{ 's' if package_data.volumes|length != 1 else '' }}
-                            </div>
+                                <!-- Primary Service -->
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <code class="me-2">{{ package.name }}</code>
+                                        <small class="text-muted">({{ package.image or 'primary' }})</small>
+                                    </div>
+                                    {% if package.volumes %}
+                                        <div class="ms-3">
+                                            {% for volume in package.volumes %}
+                                                <div class="volume-item">
+                                                    <i class="bi bi-hdd me-1"></i>{{ volume }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Dependencies -->
+                                {% if package.dependencies %}
+                                    {% for dep_name, dep_data in package.dependencies.items() %}
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <code class="me-2">{{ dep_name }}</code>
+                                            <small class="text-muted">({{ dep_data.image }})</small>
+                                        </div>
+                                        {% if dep_data.volumes %}
+                                            <div class="ms-3">
+                                                {% for volume in dep_data.volumes %}
+                                                    <div class="volume-item">
+                                                        <i class="bi bi-hdd me-1"></i>{{ volume }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>       
                         </div>
-                        {% endif %}
                     </div>
                     
                     <!-- Card Footer -->
                     <div class="card-footer bg-transparent border-top-0">
                         <div class="d-flex gap-2 justify-content-between align-items-center">
-                            <!-- Launch Button with Terminal -->
-                            <button onclick="launchTerminalWithStream('{{ url_for('depot_launch', package=package_name) }}')" 
-                                    class="btn btn-success btn-launch flex-grow-1"
-                                    data-package="{{ package_name }}"
-                                    data-stream-url="{{ url_for('depot_launch', package=package_name) }}">
+                            <button onclick="launchTerminalWithButtonAnimation('{{ url_for('depot_launch', package=package.name) }}')" 
+                                    class="btn btn-outline-success btn-launch flex-grow-1 shadow-sm-hover">
                                 <i class="bi bi-rocket-fill me-2"></i>
                                 Launch Service
                             </button>
-                            
-                            <!-- Info Button -->
-                            <a href="{{ url_for('depot_info', package=package_name) }}" 
-                               class="btn btn-outline-info btn-sm">
-                                <i class="bi bi-info-circle"></i>
+                            <a href="{{ url_for('depot_info', package=package.name) }}" 
+                               class="btn btn-outline-info">
+                                <i class="bi bi-github"></i>
                             </a>
                         </div>
                     </div>
@@ -249,14 +226,13 @@
             {% endfor %}
         </div>
         
-        <!-- No Results Message -->
-        <div id="noResults" class="text-center py-5" style="display: none;">
+        <div id="noResults" class="text-center py-5 d-none">
             <div class="card">
                 <div class="card-body py-5">
                     <i class="bi bi-search display-1 text-muted mb-3"></i>
                     <h4 class="text-muted mb-3">No Services Found</h4>
                     <p class="text-muted mb-4">
-                        No services match your current search criteria. Try adjusting your search terms or clearing the filters.
+                        No results found.
                     </p>
                     <button class="btn btn-primary" onclick="clearSearch()">
                         <i class="bi bi-arrow-clockwise me-2"></i>
@@ -267,19 +243,19 @@
         </div>
         
         {% else %}
-        <!-- Empty State -->
+        <!-- Empty -->
         <div class="text-center py-5">
             <div class="card">
                 <div class="card-body py-5">
                     <i class="bi bi-box display-1 text-muted mb-3"></i>
                     <h4 class="text-muted mb-3">No Services Available</h4>
                     <p class="text-muted mb-4">
-                        All primary services have already been launched, or no services are configured in your docker-compose.yml.
+                        There might be something wrong with the depot, or you have installed all services.
                     </p>
                     <div class="d-flex gap-2 justify-content-center">
                         <a href="{{ url_for('services') }}" class="btn btn-primary">
                             <i class="bi bi-list-ul me-2"></i>
-                            View Active Services
+                            Go to services
                         </a>
                         <a href="{{ url_for('depot') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-clockwise me-2"></i>
@@ -294,166 +270,21 @@
 </div>
 {% endblock %}
 
-
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/depot.js' ) }}"></script>
 <script>
-function launchTerminalWithStream(streamUrl, buttonElement = null) {
-    if (buttonElement) {
-        buttonElement.disabled = true;
-        const originalContent = buttonElement.innerHTML;
-        buttonElement.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Processing...';
-        
-        // Re-enable button after a short delay (in case modal fails to open)
-        setTimeout(() => {
-            buttonElement.disabled = false;
-            buttonElement.innerHTML = originalContent;
-        }, 2000);
-    }
-    
-    // Launch the terminal modal with the stream
-    launchTerminalModal(streamUrl);
-}
-
-// Legacy function for backwards compatibility - can be removed if not used elsewhere
-function launchServiceWithTerminal(packageName) {
-    console.warn('launchServiceWithTerminal is deprecated, use launchTerminalWithStream instead');
-    const streamUrl = `/depot/launch/${packageName}/stream`;
-    launchTerminalWithStream(streamUrl);
-}
-
-// Search and filter functionality
-let currentGroup = 'all';
-let currentSearch = '';
-
-function performSearch() {
-    const searchTerm = document.getElementById('serviceSearch').value.toLowerCase();
-    const serviceItems = document.querySelectorAll('.service-item');
-    const noResultsDiv = document.getElementById('noResults');
-    let visibleCount = 0;
-    
-    currentSearch = searchTerm;
-    
-    // Debug: log what we're working with
-    console.log('Current group filter:', currentGroup);
-    
-    serviceItems.forEach((item, index) => {
-        const name = item.dataset.name || '';
-        const title = item.dataset.title || '';
-        const description = item.dataset.description || '';
-        const group = item.dataset.group || '';
-        
-        // Debug: log first few items to see what data we have
-        if (index < 3) {
-            console.log(`Item ${index}:`, { name, title, description, group, element: item });
-        }
-        
-        const matchesSearch = !searchTerm || 
-            name.includes(searchTerm) || 
-            title.includes(searchTerm) || 
-            description.includes(searchTerm) ||
-            group.toLowerCase().includes(searchTerm);
-            
-        // Fix group matching - handle empty groups and exact matching
-        const matchesGroup = currentGroup === 'all' || 
-                           (currentGroup && group && group.trim() === currentGroup.trim());
-        
-        // Debug: log matching logic for first item when filtering by group
-        if (index === 0 && currentGroup !== 'all') {
-            console.log('Match check:', {
-                currentGroup,
-                itemGroup: group,
-                matchesGroup,
-                matchesSearch
-            });
-        }
-        
-        if (matchesSearch && matchesGroup) {
-            item.style.display = 'block';
-            visibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-    
-    console.log('Visible count:', visibleCount);
-    
-    // Show/hide no results message
-    if (visibleCount === 0 && serviceItems.length > 0) {
-        noResultsDiv.style.display = 'block';
-    } else {
-        noResultsDiv.style.display = 'none';
-    }
-}
-
-function filterByGroup(group) {
-    currentGroup = group;
-    
-    // Update active state on group tags
-    document.querySelectorAll('.group-tag').forEach(tag => {
-        if (tag.dataset.group === group) {
-            tag.classList.add('active');
-            tag.classList.remove('btn-outline-secondary', 'btn-outline-primary');
-            tag.classList.add('btn-primary');
-        } else {
-            tag.classList.remove('active', 'btn-primary');
-            if (tag.dataset.group === 'all') {
-                tag.classList.add('btn-outline-primary');
-            } else {
-                tag.classList.add('btn-outline-secondary');
-            }
-        }
-    });
-    
-    performSearch();
-}
-
-function clearSearch() {
-    document.getElementById('serviceSearch').value = '';
-    currentSearch = '';
-    filterByGroup('all');
-}
-
-// Add visual feedback when hovering over launch buttons
 document.addEventListener('DOMContentLoaded', function() {
-    const launchButtons = document.querySelectorAll('.btn-launch');
-    
-    launchButtons.forEach(button => {
-        button.addEventListener('mouseenter', function() {
-            this.classList.add('shadow-sm');
-        });
-        
-        button.addEventListener('mouseleave', function() {
-            this.classList.remove('shadow-sm');
-        });
-    });
-    
-    // Add search functionality
-    const searchInput = document.getElementById('serviceSearch');
+    const packagesData = {{ packages|tojson|safe }};
+    addServiceIcons(packagesData);
+
+    const searchInput = document.getElementById('Search');
     if (searchInput) {
         searchInput.addEventListener('input', performSearch);
-        
-        // Add keyboard shortcuts
         searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                clearSearch();
-            }
+            if (e.key === 'Escape') clearSearch();
         });
     }
-    
-    // Add smooth transitions for filtering
-    const style = document.createElement('style');
-    style.textContent = `
-        .service-item {
-            transition: opacity 0.2s ease-in-out;
-        }
-        .group-tag {
-            transition: all 0.2s ease-in-out;
-        }
-        .group-tag:hover {
-            transform: translateY(-1px);
-        }
-    `;
-    document.head.appendChild(style);
+    updateTagsSummary();
 });
 </script>
 {% endblock %}

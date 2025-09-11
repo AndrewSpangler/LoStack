@@ -16,14 +16,19 @@ from wtforms.validators import (
     ValidationError
 )
 from wtforms.widgets import TextArea
+from .themes import BOOTSWATCH_THEMES, CODEMIRROR_THEMES 
 
 # REGEX
 DOMAIN_REGEX = r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 URL_REGEX = r'^https?://.+'
 DURATION_REGEX = r'^\d+[smh]$'
+SERVICE_NAME_REGEX = r'^[a-z0-9-]+$'
+SERVICE_DEPENDENCIES_REGEX = r'^[a-z0-9-,]*$'
+REFRESH_FREQUENCY_REGEX = r'^\d+[s]s?$'
+PORT_REGEX = r'^\d{1,5}$'
+SESSION_DURTION_REGEX =  r'^\d+[smh]$'
 
-
-class SablierDefaultsForm(FlaskForm):
+class LoStackDefaultsForm(FlaskForm):
     """Form for editing Sablier default configuration"""
     
     domain = StringField(
@@ -81,7 +86,7 @@ class SablierDefaultsForm(FlaskForm):
         choices=[
             ('ghost', 'Ghost'),
             ('hacker-terminal', 'Hacker Terminal'),
-            ('blackboard', 'Blackboard'),
+            ('matrix', 'Matrix'),
             ('shuffle', 'Shuffle')
         ],
         validators=[DataRequired()],
@@ -117,7 +122,36 @@ class SablierDefaultsForm(FlaskForm):
     )
 
 
-class SablierServiceForm(FlaskForm):
+class UserSettingsForm(FlaskForm):
+    """Form for editing User Settings"""
+    theme = SelectField(
+        'Bootswatch Theme',
+        choices=[
+            (t, t.title(), )
+            for t in BOOTSWATCH_THEMES
+        ],
+        validators=[DataRequired()],
+        render_kw={"class": "form-select"},
+        description="Theme for general LoStack UI"
+    )
+    editor_theme = SelectField(
+        'CodeMirror Theme',
+        choices=[
+            (t, t.title(), )
+            for t in CODEMIRROR_THEMES
+        ],
+        validators=[DataRequired()],
+        render_kw={"class": "form-select"},
+        description="Theme for CodeMirror text editor"
+    )
+    
+    submit = SubmitField(
+        'Update Settings',
+        render_kw={"class": "btn btn-primary"}
+    )
+
+
+class PackageEntryForm(FlaskForm):
     """Form for creating and editing Sablier services"""
     
     id = HiddenField()
@@ -128,7 +162,7 @@ class SablierServiceForm(FlaskForm):
             DataRequired(message="Service name is required"),
             Length(min=2, max=100, message="Name must be between 2 and 100 characters"),
             Regexp(
-                r'^[a-z0-9-]+$',
+                SERVICE_NAME_REGEX,
                 message="Name can only contain lowercase letters, numbers, and hyphens"
             )
         ],
@@ -139,12 +173,12 @@ class SablierServiceForm(FlaskForm):
         description="Unique service name (used in URLs and container names)"
     )
 
-    names = StringField(
-        'Service Dependencies',
+    service_names = StringField(
+        'Service Names',
         validators=[
             Length(min=0, max=400, message="Name must be between 0 and 400 characters"),
             Regexp(
-                r'^[a-z0-9-,]*$',
+                SERVICE_DEPENDENCIES_REGEX,
                 message="Separate with commas. Names can only contain lowercase letters, numbers, and hyphens."
             )
         ],
@@ -173,7 +207,7 @@ class SablierServiceForm(FlaskForm):
         validators=[
             DataRequired(message="Port is required"),
             Regexp(
-                r'^\d{1,5}$',
+                PORT_REGEX,
                 message="Port must be a number between 1 and 65535"
             )
         ],
@@ -189,7 +223,7 @@ class SablierServiceForm(FlaskForm):
         validators=[
             DataRequired(message="Session duration is required"),
             Regexp(
-                r'^\d+[smh]$',
+               SESSION_DURTION_REGEX,
                 message="Duration must be in format like '5m', '30s', or '2h'"
             )
         ],
@@ -218,7 +252,7 @@ class SablierServiceForm(FlaskForm):
         validators=[
             DataRequired(message="Refresh frequency is required"),
             Regexp(
-                r'^\d+[sm]s?$',
+                REFRESH_FREQUENCY_REGEX,
                 message="Frequency must be in format like '3s', '500ms', or '1s'"
             )
         ],
@@ -258,75 +292,28 @@ class SablierServiceForm(FlaskForm):
     
     def validate_name(self, field):
         """Custom validator to check for service name uniqueness"""
-        from .models import SablierService
+        from .models import PackageEntry
         from flask import current_app as app
         with app.app_context():
             if field.data:
                 # Skip validation if this is an edit (has id) and name hasn't changed
                 if self.id.data:
-                    existing_service = SablierService.query.get(self.id.data)
+                    existing_service = PackageEntry.query.get(self.id.data)
                     if existing_service and existing_service.name == field.data:
                         return
                 
                 # Check for duplicate names
-                existing = SablierService.query.filter_by(name=field.data).first()
+                existing = PackageEntry.query.filter_by(name=field.data).first()
                 if existing:
                     raise ValidationError("A service with this name already exists")
-
-
-class DeleteServiceForm(FlaskForm):
-    """Simple form for service deletion confirmation"""
-    
-    service_id = HiddenField(validators=[DataRequired()])
-    service_name = HiddenField()
-    
-    confirm = BooleanField(
-        'I understand this action cannot be undone',
-        validators=[DataRequired(message="You must confirm deletion")],
-        render_kw={"class": "form-check-input"}
-    )
-    
-    submit = SubmitField(
-        'Delete Service',
-        render_kw={"class": "btn btn-danger"}
-    )
-
-
-class BulkServiceForm(FlaskForm):
-    """Form for bulk operations on services"""
-    
-    action = SelectField(
-        'Action',
-        choices=[
-            ('enable', 'Enable Selected'),
-            ('disable', 'Disable Selected'),
-            ('delete', 'Delete Selected')
-        ],
-        validators=[DataRequired()],
-        render_kw={"class": "form-select"}
-    )
-    
-    selected_services = HiddenField()  # Will contain comma-separated service IDs
-    
-    confirm = BooleanField(
-        'Confirm bulk operation',
-        validators=[DataRequired(message="You must confirm bulk operation")],
-        render_kw={"class": "form-check-input"}
-    )
-    
-    submit = SubmitField(
-        'Apply Action',
-        render_kw={"class": "btn btn-warning"}
-    )
-
 
 # Helper function to populate forms from model instances
 def populate_defaults_form(form, defaults=None):
     """Populate the defaults form with current values"""
     if defaults is None:
-        from app import app, SablierDefaults
+        from app import app, LoStackDefaults
         with app.app_context():
-            defaults = SablierDefaults.get_defaults()
+            defaults = LoStackDefaults.get_defaults()
     
     form.domain.data = defaults.domain
     form.sablier_url.data = defaults.sablier_url
@@ -334,6 +321,13 @@ def populate_defaults_form(form, defaults=None):
     form.theme.data = defaults.theme
     form.refresh_frequency.data = defaults.refresh_frequency
     form.show_details.data = defaults.show_details
+    return form
+
+
+def populate_user_settings_form(form, user):
+    """Populate the user settings form with current values"""
+    form.theme.data = user.theme
+    form.editor_theme.data = user.editor_theme
     return form
 
 
