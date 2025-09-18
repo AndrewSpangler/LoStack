@@ -26,13 +26,4 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY . /lostack
 
-ENTRYPOINT ["python3", "-u", "run.py"]
-
-# ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "30", "app:run"]
-
-# Dev environment stage
-FROM builder AS dev-envs
-
-# Add user
-RUN addgroup -S docker && \
-    adduser -S --shell /bin/bash --ingroup docker 
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "30", "app:app"]

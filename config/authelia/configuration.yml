@@ -28,9 +28,26 @@ notifier:
     filename: /config/notification.txt
 
 access_control:
+  # Default policy - LoStack has secondary forward-auth
   default_policy: one_factor
 
   # Authelia - must bypass for users to log in
   rules:
   - domain: authelia.{{ env "DOMAINNAME" }}
     policy: bypass
+
+  # Admins only for lostack
+  - domain: lostack.{{ env "DOMAINNAME" }}
+    subject:
+    - group:admins
+    policy: one_factor
+  - domain: lostack.{{ env "DOMAINNAME" }}
+    policy: deny
+  
+  # Admins only for code-server
+  - domain: code-server.{{ env "DOMAINNAME" }}
+    subject:
+    - group:admins
+    policy: one_factor
+  - domain: code-server.{{ env "DOMAINNAME" }}
+    policy: deny

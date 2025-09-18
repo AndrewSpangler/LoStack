@@ -9,6 +9,7 @@ echo \
   jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-compose
+sudo systemctl start docker
 
 mkdir -p ./certs
 mkdir -p ./logs
@@ -56,4 +57,3 @@ mkdir -p ./media/downloads/youtube/podcasts
 mkdir -p ./media/downloads/youtube/temp
 
 sudo chmod -R 666 ./media
-sudo systemctl start docker

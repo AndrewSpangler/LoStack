@@ -43,19 +43,21 @@ services:
       - ${APPDATA_DIR}/code-server:/config
       - ./:/workspace:rw
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.code-server.entrypoints=https"
-      - "traefik.http.routers.code-server.rule=Host(`code-server.${DOMAINNAME}`)"
-      - "traefik.http.services.code-server.loadbalancer.server.port=8443"
+      # - "traefik.enable=true"
+      # - "traefik.http.routers.code-server.entrypoints=https"
+      # - "traefik.http.routers.code-server.rule=Host(`code-server.${DOMAINNAME}`)"
+      # - "traefik.http.services.code-server.loadbalancer.server.port=8443"
       - "homepage.name=Code Server"
       - "homepage.group=Development"
       - "homepage.icon=vscode"
       - "homepage.description=Local File Editor"
       - "homepage.href=https://code-server.${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=code-server"
+      - "lostack.enable=true"
+      - "lostack.autostart=true"
+      - "lostack.group=code-server"
       - "lostack.duration=2h"
       - "lostack.primary=true"
+      - "lostack.port=8443"
 
   coredns:
     extends:
@@ -72,30 +74,6 @@ services:
       - "homepage.group=Background Services"
       - "homepage.icon=coredns"
       - "homepage.description=Local Name Service"
-
-  filebrowser:
-    extends:
-      file: compose/filebrowser/docker-compose.yml
-      service: filebrowser
-    volumes:
-      - ${APPDATA_DIR}/filebrowser/:/database/:rw
-      - ./:/data:rw
-    # command: > # Uncomment for proxy auth (SET UP USERS WITH ADMIN FIRST)
-    #   --auth.method=proxy
-    #   --auth.header=Remote-User
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.filebrowser.rule=Host(`filebrowser.${DOMAINNAME}`)"
-      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
-      - "homepage.name=Filebrowser"
-      - "homepage.group=File Management"
-      - "homepage.icon=filebrowser"
-      - "homepage.description=File Management"
-      - "homepage.href=https://filebrowser.${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=filebrowser"
-      - "lostack.duration=15m"
-      - "lostack.primary=true"
   
   homepage:
     extends:
@@ -107,39 +85,19 @@ services:
       - ${CONFIG_DIR}/homepage/images:/app/public/images
       - ${DOCKER_SOCKET}:/var/run/docker.sock
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.homepage.rule=Host(`${DOMAINNAME}`)"
-      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
       - "homepage.name=Homepage"
       - "homepage.group=Services"
       - "homepage.icon=homepage"
       - "homepage.description=Environment Dashboard"
       - "homepage.href=https://${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=homepage"
+      - "lostack.autostart=true"
+      - "lostack.group=homepage"
       - "lostack.duration=45m"
       - "lostack.primary=true"
-
-  it-tools:
-    extends:
-      file: compose/it-tools/docker-compose.yml
-      service: it-tools
-    # ports: # Uncomment this if you want to use the container during setup
-    #   - 8380:80
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.it-tools.entrypoints=https"
-      - "traefik.http.routers.it-tools.rule=Host(`it-tools.${DOMAINNAME}`)"
-      - "traefik.http.services.it-tools.loadbalancer.server.port=80"
-      - "homepage.name=IT-Tools"
-      - "homepage.group=Tools"
-      - "homepage.icon=it-tools"
-      - "homepage.description=Dev Tools"
-      - "homepage.href=https://it-tools.${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=it-tools"
-      - "lostack.duration=15m"
-      - "lostack.primary=true"
+      - "lostack.enable=true"
+      - "lostack.port=3000"
+      # Host on ${DOMAINNAME} rather than homepage.${DOMAINNAME}
+      - "lostack.root=true" 
 
   ldap-user-manager:
     extends:
@@ -148,32 +106,17 @@ services:
     ports: # Enable for first-time-setup of openldap
       - ${LDAP_USER_MANAGER_PORT}:80  
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ldap-user-manager.rule=Host(`ldap-user-manager.${DOMAINNAME}`)"
-      - "traefik.http.services.ldap-user-manager.loadbalancer.server.port=80"
-      - "traefik.http.services.ldap-user-manager.loadbalancer.server.scheme=http"
       - "homepage.name=Ldap User Manager"
       - "homepage.group=Admin"
       - "homepage.icon=/images/account.png"
       - "homepage.description=Users and Groups"
       - "homepage.href=https://ldap-user-manager.${DOMAINNAME}/"
-      - "sablier.enable=true"
-      - "sablier.group=ldap-user-manager"
+      - "lostack.enable=true"
+      - "lostack.port=80"
+      - "lostack.autostart=true"
+      - "lostack.group=ldap-user-manager"
       - "lostack.duration=5m"
       - "lostack.primary=true"
-
-  mkcert:
-    extends:
-      file: compose/mkcert/docker-compose.yml
-      service: mkcert
-    volumes:
-      - ${CERTS_DIR}:/root/.local/share/mkcert
-    labels:
-      - "homepage.name=MKCert"
-      - "homepage.group=Background Services"
-      - "homepage.icon=/images/lock.png"
-      - "homepage.description=Localhost cert management"
-
 
   openldap:
     extends:
@@ -199,10 +142,10 @@ services:
       - "homepage.group=Background Services"
       - "homepage.icon=mdi-autorenew"
       - "homepage.description=Auto-Start Containers"
-      - "homepage.href=https://sablier.${DOMAINNAME}/"
-      - "lostack.primary=false" # DO NOT ENABLE SABLIER ON SABLIER. IT WILL LOCK YOU OUT
-      - "sablier.enable=false"
-      - "sablier.group=sablier"
+      - "lostack.primary=false"
+      # DO NOT ENABLE LOSTACK ON SABLIER. IT WILL BREAK AUTOSTART.
+      - "lostack.enable=false"
+      - "lostack.group=sablier"
 
   lostack:
     extends:
@@ -212,6 +155,19 @@ services:
       context: lostack
       target: builder
     restart: unless-stopped
+    environment:
+      - ADMIN_GROUP=admins
+      - DB_HOST=lostack-db
+      - DB_NAME=lostack-db
+      - DB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_PORT=3306
+      - DB_USER=lostack
+      - TRUSTED_PROXY_IPS=${TRUSTED_PROXYS}
+      - USERNAME_HEADER=Remote-User
+      - GROUPS_HEADER=Remote-Groups
+      - ADMIN_GROUP=admins
+      - DEBUG=false
+      - DEPOT_DEV_MODE=true
     volumes:
       - ${DOCKER_SOCKET}:/var/run/docker.sock
       - ${CONFIG_DIR}/lostack/lostack-dynamic.yml:/dynamic.yml:rw
@@ -219,20 +175,68 @@ services:
       - ./:/docker
       - ./lostack-compose.yml:/lostack-compose.yml
     labels:
+      # LoStack handles group-based auth internally
+      # It uses Authelia's forwarded headers to auth users
       - "traefik.enable=true"
       - "traefik.http.routers.lostack.rule=Host(`lostack.${DOMAINNAME}`)"
       - "traefik.http.services.lostack.loadbalancer.server.port=80"
       - "traefik.docker.network=traefik_network"
+      # Create LoStack forwardauth middleware
+      - "traefik.http.middlewares.lostack-auth.forwardauth.address=http://lostack:80/auth"
+      - "traefik.http.middlewares.lostack-auth.forwardauth.authResponseHeaders=Remote-Name,Remote-Groups"
+      - "traefik.http.middlewares.lostack-auth.forwardauth.trustForwardHeader=true"
       - "homepage.name=LoStack Admin"
       - "homepage.group=Admin"
       - "homepage.icon=mdi-rocket-launch"
-      - "homepage.description=Container Auto-Start"
+      - "homepage.description=Docker Ecosystem Managment"
       - "homepage.href=https://lostack.${DOMAINNAME}/"  
+
+  lostack-ldap-test:
+    extends:
+      file: compose/lostack/docker-compose.yml
+      service: lostack-ldap-test
+    build:
+      context: lostack
+      dockerfile: ldap-test.dockerfile
+    restart: unless-stopped
+    environment:
+      - USERNAME_HEADER=Remote-User
+      - GROUPS_HEADER=Remote-Groups
+      - ADMIN_GROUP=admins
+      - DB_HOST=lostack-db
+      - DB_NAME=lostack-db
+      - DB_PASSWORD=${DATABASE_PASSWORD}
+      - DB_PORT=3306
+      - DB_USER=lostack      
+      - TRUSTED_PROXY_IPS=${TRUSTED_PROXYS}
+      - DEBUG=false
+      - ORGANISATION_NAME=${LDAP_ORGANISATION}
+      - LDAP_URI=ldap://testldap:${OPENLDAP_PORT}
+      - LDAP_BASE_DN="${LDAP_BASE_DN}"
+      - LDAP_ADMINS_GROUP=admins
+      - LDAP_ADMIN_BIND_DN="cn=${LDAP_ADMIN_USER},${LDAP_BASE_DN}"
+      - LDAP_ADMIN_BIND_PWD=${LDAP_ADMIN_PASSWORD} 
+      - LDAP_DEBUG=true
+      - LDAP_IGNORE_CERT_ERRORS="true
+      - LDAP_REQUIRE_STARTTLS="false
+      - LDAP_DOMAIN=${DOMAINNAME}
+      - ACCEPT_WEAK_PASSWORDS=${LDAP_ACCEPT_WEAK_PASSWORDS}
+      - EMAIL_FROM_ADDRESS=${LDAP_ADMIN_USER}@${DOMAINNAME}
+    networks:
+      - traefik_network
+    labels:
+      - "homepage.name=LoStack LDAP Test"
+      - "homepage.group=Background Services"
+      - "homepage.icon=mdi-database"
+      - "homepage.description=LDAP Setup Tool"
+      - "traefik.enable=true"
+      - "traefik.http.services.lostack-ldap-test.loadbalancer.server.port=8080"
 
   lostack-db:
     extends:
       file: compose/lostack/docker-compose.yml
       service: lostack-db
+    restart: unless-stopped
     volumes:
       - ${APPDATA_DIR}/lostack-db/:/var/lib/mysql
     labels:
@@ -252,6 +256,7 @@ services:
       - ${DOCKER_SOCKET}:/var/run/docker.sock:ro
       - ${CERTS_DIR}:/certs:ro
       - ${CONFIG_DIR}/traefik/dynamic.yml:/dynamic/dynamic.yml
+#      - ${CONFIG_DIR}/traefik/certificates.yaml:/certificates.yaml
       - ${CONFIG_DIR}/lostack/lostack-dynamic.yml:/dynamic/lostack-dynamic.yml
       - ${LOGS_DIR}/traefik:/logs/
       - ./traefik-plugins:/plugins-local

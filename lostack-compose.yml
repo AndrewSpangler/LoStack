@@ -3,4 +3,164 @@ networks:
     driver: bridge
     name: traefik_network
     external: true
-services: {}
+services:
+  ackee:
+    image: electerious/ackee
+    container_name: ackee
+    hostname: ackee
+    networks:
+    - traefik_network
+    environment:
+    - WAIT_HOSTS=ackee-mongo:27017
+    - ACKEE_MONGODB=mongodb://ackee-mongo:27017/ackee
+    - ACKEE_USERNAME=admin
+    - ACKEE_PASSWORD=${ADMIN_PASSWORD}
+    - ACKEE_TTL=3600000
+    - ACKEE_ALLOW_ORIGIN=https://ackee.${DOMAINNAME}
+    depends_on:
+    - ackee-mongo
+    restart: always
+    labels:
+    - lostack.enable=true
+    - lostack.port=3000
+    - homepage.name=Ackee
+    - homepage.group=Apps
+    - homepage.icon=mdi-google-analytics
+    - homepage.description=Analytics Tool
+    - homepage.href=https://ackee.${DOMAINNAME}/
+    - lostack.autostart=true
+    - lostack.group=ackee
+    - lostack.default_duration=15m
+    - lostack.primary=true
+    - lostack.details=Self-hosted, Node.js based analytics tool for those who care
+      about privacy.
+    - lostack.tags=analytics,privacy,api,graphql
+    - lostack.project_url=https://github.com/electerious/Ackee
+  ackee-mongo:
+    image: mongo
+    container_name: ackee-mongo
+    hostname: ackee-mongo
+    networks:
+    - traefik_network
+    volumes:
+    - ${APPDATA_DIR}/ackee/db:/data/db
+    labels:
+    - homepage.name=Ackee MongoDB
+    - homepage.group=Databases
+    - homepage.icon=mongodb
+    - homepage.description=Ackee Database
+    - lostack.autostart=true
+    - lostack.group=ackee
+    - lostack.enable=true
+  actual-budget:
+    image: actualbudget/actual-server:latest
+    restart: unless-stopped
+    container_name: actual-budget
+    hostname: actual-budget
+    networks:
+    - traefik_network
+    labels:
+    - homepage.description=Personal Finance
+    - homepage.group=Budget
+    - homepage.href=https://actual-budget.${DOMAINNAME}/
+    - homepage.icon=actual-budget
+    - homepage.name=Actual-budget
+    - lostack.default_duration=15m
+    - lostack.primary=true
+    - lostack.details=Actual is a local-first personal finance tool based on zero-sum
+      budgeting. It supports synchronization across devices, custom rules, manual
+      transaction importing (from QIF, OFX, and QFX files), and optional automatic
+      synchronization with many banks.
+    - lostack.tags=budgeting,finance,productivity
+    - lostack.project_url=https://github.com/actualbudget/actual
+    - lostack.autostart=true
+    - lostack.group=actual-budget
+    - lostack.enable=true
+    - lostack.port=5006
+    volumes:
+    - ${APPDATA_DIR}/actual-budget:/data
+  aptabase:
+    container_name: aptabase
+    image: ghcr.io/aptabase/aptabase:main
+    restart: always
+    depends_on:
+    - aptabase-clickhouse
+    - aptabase-postgres
+    volumes:
+    - ${APPDATA_DIR}/aptabase/config/secrets:/lostack_secrets
+    environment:
+      BASE_URL: https://aptabase.${DOMAINNAME}:8000
+      DATABASE_URL: Server=aptabase-postgres;Port=5432;User Id=aptabase;Password=${DATABASE_PASSWORD};Database=aptabase
+      CLICKHOUSE_URL: Host=aptabase-clickhouse;Port=8123;Username=aptabase;Password=${DATABASE_PASSWORD}
+      TZ: ${TZ}
+    entrypoint: "sh -c '\n  if [ ! -f /lostack_secrets/auth.secret ]; then\n    echo\
+      \ \"Generating new AUTH_SECRET...\"\n    mkdir -p /lostack_secrets\n    AUTH_SECRET=$(openssl\
+      \ rand -hex 32)\n    echo \"AUTH_SECRET=$$AUTH_SECRET\" > /lostack_secrets/auth.secret\n\
+      \  else\n    echo \"Using existing AUTH_SECRET from /lostack_secrets/auth.secret\"\
+      \n  fi\n  . /lostack_secrets/auth.secret\n  export AUTH_SECRET\n  dotnet Aptabase.dll\n\
+      '\n"
+    hostname: aptabase
+    networks:
+    - traefik_network
+    labels:
+    - homepage.description=App Analytics
+    - homepage.group=Analytics
+    - homepage.href=https://aptabase.${DOMAINNAME}/
+    - homepage.icon=mdi-poll
+    - homepage.name=Aptabase
+    - lostack.default_duration=15m
+    - lostack.autostart=true
+    - lostack.group=aptabase
+    - lostack.primary=true
+    - lostack.details=Open source, privacy first and simple analytics for mobile and
+      desktop apps.
+    - lostack.tags=analytics,privacy
+    - lostack.project_url=https://github.com/aptabase/aptabase
+    - lostack.enable=true
+    - lostack.port=8080
+  aptabase-postgres:
+    container_name: aptabase-postgres
+    image: postgres:15-alpine
+    restart: always
+    volumes:
+    - ${APPDATA_DIR}/aptabase/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: aptabase
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      TZ: ${TZ}
+    hostname: aptabase-postgres
+    networks:
+    - traefik_network
+    labels:
+    - homepage.description=Aptabase Postgress
+    - homepage.group=Databases
+    - homepage.icon=postgres
+    - homepage.name=Aptabase Postgres
+    - lostack.autostart=true
+    - lostack.group=aptabase
+    - lostack.enable=true
+  aptabase-clickhouse:
+    container_name: aptabase-clickhouse
+    image: clickhouse/clickhouse-server:23.8.4.69-alpine
+    restart: always
+    volumes:
+    - ${APPDATA_DIR}/aptabase/events-db:/var/lib/clickhouse
+    environment:
+      CLICKHOUSE_USER: aptabase
+      CLICKHOUSE_PASSWORD: ${DATABASE_PASSWORD}
+      TZ: ${TZ}
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    hostname: aptabase-clickhouse
+    networks:
+    - traefik_network
+    labels:
+    - homepage.description=Aptabase Clickhouse
+    - homepage.group=Databases
+    - homepage.icon=clickhouse
+    - homepage.name=Aptabase Clickhouse
+    - lostack.autostart=true
+    - lostack.group=aptabase
+    - lostack.enable=true

@@ -1,0 +1,147 @@
+{% extends "core.html" %}
+
+{% block title %}{{ action }} Service - LoStack Admin{% endblock %}
+
+{% block page_title %}{{ action }} Service{% endblock %}
+
+{% block nav_actions %}
+{% endblock %}
+
+{% macro render_field(field, col_class="col-md-6", field_type="input") %}
+<div class="{{ col_class }} mt-1">
+    {% if field_type == "switch" %}
+        <div class="form-check form-switch">
+            {{ field(class="form-check-input" + (" is-invalid" if field.errors else "")) }}
+            {{ field.label(class="form-check-label") }}
+            {% if field.errors %}
+                <div class="invalid-feedback">
+                    {{ field.errors[0] }}
+                </div>
+            {% endif %}
+        </div>
+        {% if field.description %}
+            <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                {{ field.description }}
+            </div>
+        {% endif %}
+    {% else %}
+        {{ field.label(class="form-label") }}
+        {% if field_type == "select" %}
+            {{ field(class="form-select" + (" is-invalid" if field.errors else "")) }}
+        {% else %}
+            {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+        {% endif %}
+        {% if field.errors %}
+            <div class="invalid-feedback">
+                {{ field.errors[0] }}
+            </div>
+        {% endif %}
+        {% if field.description %}
+            <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                {{ field.description }}
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-{% if action == 'Edit' %}pencil-square{% else %}plus-circle{% endif %} me-2"></i>
+                    {{ action }} Service
+                </h5>
+            </div>
+            
+            
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        {{ render_field(form.enabled, field_type="switch") }}
+                    </div>
+                               
+                    <div class="row mb-4 mx-2 my-0">
+                        <div class="card px-0">
+                            <div class="card-header bg-secondary text-white">
+                                <strong class="mb-0">
+                                    Traefik Config
+                                </strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {{ render_field(form.name) }}
+                                    {{ render_field(form.port) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4 mx-2 my-0">
+                        <div class="card px-0">
+                            <div class="card-header bg-secondary text-white">
+                                <strong class="mb-0">
+                                    Sablier Config
+                                </strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {{ render_field(form.sablier_middleware_enabled, field_type="switch") }}
+                                    {{ render_field(form.show_details, field_type="switch") }}
+                                    {{ render_field(form.display_name) }}
+                                    {{ render_field(form.service_names) }}
+                                    {{ render_field(form.theme, field_type="select") }}
+                                    {{ render_field(form.session_duration) }}
+                                    {{ render_field(form.refresh_frequency) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4 mx-2 my-0">
+                        <div class="card px-0">
+                            <div class="card-header bg-secondary text-white">
+                                <strong class="mb-0">
+                                    Access Control
+                                </strong>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {{ render_field(form.lostack_middleware_enabled, field_type="switch") }}
+                                    {{ render_field(form.access_groups) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('services.services') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancel
+                        </a>
+                        
+                        <div class="d-flex gap-2">                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-{% if action == 'Edit' %}check-circle{% else %}plus-circle{% endif %} me-1"></i>
+                                {{ action }} Service
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/service_form.js' ) }}"></script>
+{% endblock %}

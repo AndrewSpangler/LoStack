@@ -2,8 +2,9 @@ TODO BEFORE RELEASE:
    Finish implementing editor themes
    Finish implementing bootstrap themes
    Handle SVG in file browser
+   
    Go To App after install
-
+   
    Make dedicated email
    Make dedicated repo
    Implement package author tag
@@ -11,7 +12,8 @@ TODO BEFORE RELEASE:
    Make container management page
    Implement network system (with prefixes)
    Rename database tables
-   Separate sablier middleware and traefik routing 
+   Separate sablier middleware, traefik routing, and auth
+   Add auth dropdowns 
    Modal for selecting theme and editor theme
 
 DB/Routing:
@@ -29,6 +31,7 @@ https://hub.docker.com/r/zelon88/hrconvert2
 TODO:
  - add codemirror css / js to static folders
  - option for "icon_proxy" mode where icons are pulled from CDNs with etagging
+ - write lostack icons to homepage icons folder somehow
  
 Fields allowed in packages:
    volumes
@@ -51,3 +54,10 @@ Technologies used:
   - Pictogrammers Material Design Icons (Store)
   - ANSI Up (JS)
   - CodeMirror
+
+
+ultimaterez
+But so far the bits that worked as intended have been really good. I think that you might want to redo the "store" layout so that the app doesn't disappear from there after you've installed it. It is a little confusing to know where to go after you install it.
+Lyfe
+ooh yeah actually
+I should have it remain, using the disabled color scheme, with an uninstall button

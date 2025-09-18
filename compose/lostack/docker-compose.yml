@@ -10,17 +10,16 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - TZ=${TZ}
-      - DB_HOST=lostack-db
-      - DB_PORT=3306
-      - DB_USER=lostack
-      - DB_PASSWORD=${DATABASE_PASSWORD}
-      - DB_NAME=lostack-db
-      - DOMAINNAME=${DOMAINNAME}
-      - DOMAIN_NAME=${DOMAINNAME}
-      - SABLIER_URL=http://sablier:10000
-      - SABLIER_DEFAULT_SESSION_DURATION=15m
-      - SABLIER_DEFAULT_THEME=ghost
-      - TRUSTED_PROXY_IPS=${TRUSTED_PROXYS}
+
+  lostack-ldap-test:
+    container_name: lostack-ldap-test
+    hostname: lostack-ldap-test
+    networks:
+      traefik_network: {}
+    stop_signal: SIGINT
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ}    
 
   lostack-db:
     image: mariadb:10.11

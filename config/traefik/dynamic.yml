@@ -53,30 +53,3 @@ http:
         stsIncludeSubdomains: true
         stsSeconds: 63072000
         stsPreload: true
-
-    homepage-autostart:
-      plugin:
-        sablier:
-          sablierUrl: http://sablier:10000
-          names: homepage
-          sessionDuration: 30m
-          dynamic:
-            displayName: Homepage
-            showDetails: false
-            theme: ghost
-            refreshFrequency: 3s
-        
-  services:
-    homepage:
-      loadBalancer:
-        servers:
-        - url: http://homepage:3000/
-
-  routers:
-    homepage-dynamic:
-      rule: Host(`{{ env "DOMAINNAME" }}`)
-      entryPoints:
-      - https
-      service: homepage
-      middlewares:
-      - homepage-autostart
